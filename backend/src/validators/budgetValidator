@@ -1,0 +1,21 @@
+const validateBudget = (req, res, next) => {
+  const { category, amount, month } = req.body;
+
+  if (!category || !amount || !month) {
+    return res.status(400).json({
+      message: "Category, amount, and month are required.",
+    });
+  }
+
+  if (amount <= 0) {
+    return res.status(400).json({
+      message: "Amount must be greater than 0.",
+    });
+  }
+
+  next();
+};
+
+module.exports = {
+  validateBudget,
+};

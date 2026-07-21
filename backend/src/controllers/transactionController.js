@@ -5,7 +5,7 @@ const addTransaction = async (req, res) => {
   try {
     const transactionData = {
       ...req.body,
-      userId: req.user?.id || "TEMP_USER_ID",
+      userId: req.user.id,
     };
 
     const transaction = await transactionService.createTransaction(transactionData);
@@ -18,8 +18,7 @@ const addTransaction = async (req, res) => {
 // GET ALL
 const getAllTransactions = async (req, res) => {
   try {
-    const userId = req.user?.id || "TEMP_USER_ID";
-
+    const userId = req.user.id;
     const transactions = await transactionService.getAllTransactions(userId);
     res.status(200).json(transactions);
   } catch (error) {

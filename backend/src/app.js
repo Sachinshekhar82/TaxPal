@@ -1,16 +1,38 @@
 const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+
+dotenv.config();
+
 const app = express();
 
-const transactionRoutes = require("./routes/transactionRoutes");
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Import Routes
+// const taxPolicyRoutes = require("./routes/taxPolicyRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 
-app.use(express.json());
-
-app.use("/api/transactions", transactionRoutes);
+// Use Routes
+// app.use("/api/tax-policy", taxPolicyRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
+// Default Route
 app.get("/", (req, res) => {
-  res.send("TaxPal Backend Running ✅");
+  res.json({
+    message: "TaxPal API is running successfully.",
+  });
+});
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Route not found",
+  });
 });
 
 module.exports = app;

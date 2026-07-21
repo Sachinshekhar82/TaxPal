@@ -1,5 +1,6 @@
 const Transaction = require("../models/Transaction");
 
+// Existing Dashboard API
 const getDashboardData = async (userId) => {
   const transactions = await Transaction.find({ userId }).sort({ date: -1 });
 
@@ -23,6 +24,39 @@ const getDashboardData = async (userId) => {
   };
 };
 
+// NEW Spending Breakdown API
+const getSpendingBreakdown = async (userId) => {
+  const breakdown = await Transaction.aggregate([
+    {
+      $match: {
+        userId: Transaction.db.base.Types.ObjectId.createFromHexString(userId),
+        type: "expense",
+      },
+    },
+    {
+      $group: {
+        _id: "$category",
+        total: { $sum: "$amount" },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        category: "$_id",
+        total: 1,
+      },
+    },
+    {
+      $sort: {
+        total: -1,
+      },
+    },
+  ]);
+
+  return breakdown;
+};
+
 module.exports = {
   getDashboardData,
+  getSpendingBreakdown,
 };

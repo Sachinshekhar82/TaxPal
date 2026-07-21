@@ -1,8 +1,9 @@
 const dashboardService = require("../services/dashboardService");
 
+// Existing Dashboard API
 const getDashboard = async (req, res) => {
   try {
-    const userId = req.user?.id || "TEMP_USER_ID";
+    const userId = req.user.id;
 
     const dashboard = await dashboardService.getDashboardData(userId);
 
@@ -14,6 +15,22 @@ const getDashboard = async (req, res) => {
   }
 };
 
+// NEW Spending Breakdown API
+const getSpendingBreakdown = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const data = await dashboardService.getSpendingBreakdown(userId);
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   getDashboard,
+  getSpendingBreakdown,
 };
