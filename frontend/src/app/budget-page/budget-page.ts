@@ -45,11 +45,11 @@ export class BudgetPage implements OnInit {
     private categoryService: CategoryService,
     private transactionService: TransactionService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.currencySymbol = this.authService.getCurrencySymbol();
-    
+
     // Set default month to current month in local timezone (YYYY-MM)
     const now = new Date();
     const year = now.getFullYear();
@@ -237,7 +237,7 @@ export class BudgetPage implements OnInit {
     if (!inputVal) {
       this.filteredCategories = this.expenseCategories;
     } else {
-      this.filteredCategories = this.expenseCategories.filter(c => 
+      this.filteredCategories = this.expenseCategories.filter(c =>
         c.toLowerCase().includes(inputVal.toLowerCase())
       );
     }
@@ -245,7 +245,7 @@ export class BudgetPage implements OnInit {
 
   onCategoryInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.filteredCategories = this.expenseCategories.filter(c => 
+    this.filteredCategories = this.expenseCategories.filter(c =>
       c.toLowerCase().includes(value.toLowerCase())
     );
     this.showSuggestions = true;
