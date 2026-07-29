@@ -60,19 +60,19 @@ describe('TaxEstimator Class Logic', () => {
 
     // Annualized taxable income = 50500 * 4 = 202000
     // US Federal single bracket check on 202000:
-    // Up to 11600: 10% -> 1160
-    // 11600 to 47150 (35550): 12% -> 4266
-    // 47150 to 100525 (53375): 22% -> 11742.5
-    // 100525 to 191950 (91425): 24% -> 21942
-    // Above 191950 (10050): 32% -> 3216
-    // Total Federal Annual = 1160 + 4266 + 11742.5 + 21942 + 3216 = 42326.5
-    // Federal Quarter = 42326.5 / 4 = 10581.625
-    // CA State Tax flat 6% annual on 202000 = 12120
-    // State Tax Quarter = 12120 / 4 = 3030
-    // Total Estimated Tax Quarter = 10581.625 + 3030 = 13611.625
-    expect(component.summaryFederalTax).toBeCloseTo(10581.625, 2);
-    expect(component.summaryStateTax).toBeCloseTo(3030, 2);
-    expect(component.summaryEstimatedTax).toBeCloseTo(13611.625, 2);
+    // Up to 12400: 10% -> 1240
+    // 12400 to 50400 (38000): 12% -> 4560
+    // 50400 to 105700 (55300): 22% -> 12166
+    // 105700 to 201775 (96075): 24% -> 23058
+    // Above 201775 (225 portion): 32% -> 72
+    // Total Federal Annual = 1240 + 4560 + 12166 + 23058 + 72 = 41096
+    // Federal Quarter = 41096 / 4 = 10274
+    // CA State Tax flat 9.3% annual on 202000 = 18786
+    // State Tax Quarter = 18786 / 4 = 4696.50
+    // Total Estimated Tax Quarter = 10274 + 4696.50 = 14970.50
+    expect(component.summaryFederalTax).toBeCloseTo(10274, 2);
+    expect(component.summaryStateTax).toBeCloseTo(4696.50, 2);
+    expect(component.summaryEstimatedTax).toBeCloseTo(14970.50, 2);
     expect(component.dueDate).toBe('June 15, 2026');
   });
 

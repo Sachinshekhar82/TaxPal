@@ -15,6 +15,11 @@ interface CountryConfig {
   currencySymbol: string;
 }
 
+interface Slab {
+  upTo: number;
+  rate: number;
+}
+
 @Component({
   selector: 'app-tax-estimator',
   standalone: true,
@@ -40,62 +45,62 @@ export class TaxEstimator implements OnInit {
   calculatedQuarter = '';
   dueDate = '';
 
-  // Country config mapping with all states, provinces, and regions
+  
   private countryConfigs: { [key: string]: CountryConfig } = {
     'US': {
       currencySymbol: '$',
       hasStates: true,
       states: [
-        { value: 'AL', label: 'Alabama', taxRate: 0.04 },
+        { value: 'AL', label: 'Alabama', taxRate: 0.00 },
         { value: 'AK', label: 'Alaska', taxRate: 0.00 },
-        { value: 'AZ', label: 'Arizona', taxRate: 0.025 },
-        { value: 'AR', label: 'Arkansas', taxRate: 0.044 },
-        { value: 'CA', label: 'California', taxRate: 0.06 },
-        { value: 'CO', label: 'Colorado', taxRate: 0.044 },
-        { value: 'CT', label: 'Connecticut', taxRate: 0.05 },
+        { value: 'AZ', label: 'Arizona', taxRate: 0.00 },
+        { value: 'AR', label: 'Arkansas', taxRate: 0.00 },
+        { value: 'CA', label: 'California', taxRate: 0.093 },
+        { value: 'CO', label: 'Colorado', taxRate: 0.00 },
+        { value: 'CT', label: 'Connecticut', taxRate: 0.00 },
         { value: 'DE', label: 'Delaware', taxRate: 0.00 },
-        { value: 'DC', label: 'District of Columbia', taxRate: 0.0825 },
+        { value: 'DC', label: 'District of Columbia', taxRate: 0.00 },
         { value: 'FL', label: 'Florida', taxRate: 0.00 },
-        { value: 'GA', label: 'Georgia', taxRate: 0.0575 },
-        { value: 'HI', label: 'Hawaii', taxRate: 0.05 },
-        { value: 'ID', label: 'Idaho', taxRate: 0.058 },
+        { value: 'GA', label: 'Georgia', taxRate: 0.0549 },
+        { value: 'HI', label: 'Hawaii', taxRate: 0.00 },
+        { value: 'ID', label: 'Idaho', taxRate: 0.00 },
         { value: 'IL', label: 'Illinois', taxRate: 0.0495 },
-        { value: 'IN', label: 'Indiana', taxRate: 0.0323 },
-        { value: 'IA', label: 'Iowa', taxRate: 0.06 },
-        { value: 'KS', label: 'Kansas', taxRate: 0.057 },
-        { value: 'KY', label: 'Kentucky', taxRate: 0.05 },
-        { value: 'LA', label: 'Louisiana', taxRate: 0.0425 },
-        { value: 'ME', label: 'Maine', taxRate: 0.058 },
-        { value: 'MD', label: 'Maryland', taxRate: 0.0475 },
-        { value: 'MA', label: 'Massachusetts', taxRate: 0.05 },
-        { value: 'MI', label: 'Michigan', taxRate: 0.0425 },
-        { value: 'MN', label: 'Minnesota', taxRate: 0.0535 },
-        { value: 'MS', label: 'Mississippi', taxRate: 0.05 },
-        { value: 'MO', label: 'Missouri', taxRate: 0.0495 },
-        { value: 'MT', label: 'Montana', taxRate: 0.047 },
-        { value: 'NE', label: 'Nebraska', taxRate: 0.0584 },
+        { value: 'IN', label: 'Indiana', taxRate: 0.00 },
+        { value: 'IA', label: 'Iowa', taxRate: 0.00 },
+        { value: 'KS', label: 'Kansas', taxRate: 0.00 },
+        { value: 'KY', label: 'Kentucky', taxRate: 0.00 },
+        { value: 'LA', label: 'Louisiana', taxRate: 0.00 },
+        { value: 'ME', label: 'Maine', taxRate: 0.00 },
+        { value: 'MD', label: 'Maryland', taxRate: 0.00 },
+        { value: 'MA', label: 'Massachusetts', taxRate: 0.00 },
+        { value: 'MI', label: 'Michigan', taxRate: 0.00 },
+        { value: 'MN', label: 'Minnesota', taxRate: 0.00 },
+        { value: 'MS', label: 'Mississippi', taxRate: 0.00 },
+        { value: 'MO', label: 'Missouri', taxRate: 0.00 },
+        { value: 'MT', label: 'Montana', taxRate: 0.00 },
+        { value: 'NE', label: 'Nebraska', taxRate: 0.00 },
         { value: 'NV', label: 'Nevada', taxRate: 0.00 },
         { value: 'NH', label: 'New Hampshire', taxRate: 0.00 },
-        { value: 'NJ', label: 'New Jersey', taxRate: 0.055 },
-        { value: 'NM', label: 'New Mexico', taxRate: 0.049 },
-        { value: 'NY', label: 'New York', taxRate: 0.05 },
-        { value: 'NC', label: 'North Carolina', taxRate: 0.0475 },
-        { value: 'ND', label: 'North Dakota', taxRate: 0.02 },
-        { value: 'OH', label: 'Ohio', taxRate: 0.03 },
-        { value: 'OK', label: 'Oklahoma', taxRate: 0.0475 },
-        { value: 'OR', label: 'Oregon', taxRate: 0.0475 },
+        { value: 'NJ', label: 'New Jersey', taxRate: 0.0637 },
+        { value: 'NM', label: 'New Mexico', taxRate: 0.00 },
+        { value: 'NY', label: 'New York', taxRate: 0.0685 },
+        { value: 'NC', label: 'North Carolina', taxRate: 0.00 },
+        { value: 'ND', label: 'North Dakota', taxRate: 0.00 },
+        { value: 'OH', label: 'Ohio', taxRate: 0.035 },
+        { value: 'OK', label: 'Oklahoma', taxRate: 0.00 },
+        { value: 'OR', label: 'Oregon', taxRate: 0.00 },
         { value: 'PA', label: 'Pennsylvania', taxRate: 0.0307 },
-        { value: 'RI', label: 'Rhode Island', taxRate: 0.0375 },
-        { value: 'SC', label: 'South Carolina', taxRate: 0.04 },
+        { value: 'RI', label: 'Rhode Island', taxRate: 0.00 },
+        { value: 'SC', label: 'South Carolina', taxRate: 0.00 },
         { value: 'SD', label: 'South Dakota', taxRate: 0.00 },
         { value: 'TN', label: 'Tennessee', taxRate: 0.00 },
         { value: 'TX', label: 'Texas', taxRate: 0.00 },
-        { value: 'UT', label: 'Utah', taxRate: 0.0485 },
-        { value: 'VT', label: 'Vermont', taxRate: 0.0335 },
-        { value: 'VA', label: 'Virginia', taxRate: 0.0575 },
+        { value: 'UT', label: 'Utah', taxRate: 0.00 },
+        { value: 'VT', label: 'Vermont', taxRate: 0.00 },
+        { value: 'VA', label: 'Virginia', taxRate: 0.00 },
         { value: 'WA', label: 'Washington', taxRate: 0.00 },
-        { value: 'WV', label: 'West Virginia', taxRate: 0.045 },
-        { value: 'WI', label: 'Wisconsin', taxRate: 0.053 },
+        { value: 'WV', label: 'West Virginia', taxRate: 0.00 },
+        { value: 'WI', label: 'Wisconsin', taxRate: 0.00 },
         { value: 'WY', label: 'Wyoming', taxRate: 0.00 }
       ]
     },
@@ -104,18 +109,18 @@ export class TaxEstimator implements OnInit {
       hasStates: true,
       states: [
         { value: 'AB', label: 'Alberta', taxRate: 0.10 },
-        { value: 'BC', label: 'British Columbia', taxRate: 0.0506 },
-        { value: 'MB', label: 'Manitoba', taxRate: 0.108 },
-        { value: 'NB', label: 'New Brunswick', taxRate: 0.0968 },
-        { value: 'NL', label: 'Newfoundland and Labrador', taxRate: 0.087 },
-        { value: 'NS', label: 'Nova Scotia', taxRate: 0.0879 },
-        { value: 'ON', label: 'Ontario', taxRate: 0.0505 },
-        { value: 'PE', label: 'Prince Edward Island', taxRate: 0.098 },
-        { value: 'QC', label: 'Quebec', taxRate: 0.15 },
+        { value: 'BC', label: 'British Columbia', taxRate: 0.077 },
+        { value: 'MB', label: 'Manitoba', taxRate: 0.1275 },
+        { value: 'NB', label: 'New Brunswick', taxRate: 0.14 },
+        { value: 'NL', label: 'Newfoundland and Labrador', taxRate: 0.00 },
+        { value: 'NS', label: 'Nova Scotia', taxRate: 0.1379 },
+        { value: 'ON', label: 'Ontario', taxRate: 0.0915 },
+        { value: 'PE', label: 'Prince Edward Island', taxRate: 0.00 },
+        { value: 'QC', label: 'Quebec', taxRate: 0.14 },
         { value: 'SK', label: 'Saskatchewan', taxRate: 0.105 },
-        { value: 'NT', label: 'Northwest Territories', taxRate: 0.059 },
-        { value: 'NU', label: 'Nunavut', taxRate: 0.04 },
-        { value: 'YT', label: 'Yukon', taxRate: 0.064 }
+        { value: 'NT', label: 'Northwest Territories', taxRate: 0.00 },
+        { value: 'NU', label: 'Nunavut', taxRate: 0.00 },
+        { value: 'YT', label: 'Yukon', taxRate: 0.00 }
       ]
     },
     'UK': {
@@ -186,6 +191,172 @@ export class TaxEstimator implements OnInit {
     }
   };
 
+  
+  private taxSlabs: { [country: string]: { [filingStatus: string]: Slab[] } } = {
+    'US': {
+      'Single': [
+        { upTo: 12400, rate: 0.1 },
+        { upTo: 50400, rate: 0.12 },
+        { upTo: 105700, rate: 0.22 },
+        { upTo: 201775, rate: 0.24 },
+        { upTo: 256225, rate: 0.32 },
+        { upTo: 640600, rate: 0.35 },
+        { upTo: Infinity, rate: 0.37 }
+      ],
+      'Married': [
+        { upTo: 24800, rate: 0.1 },
+        { upTo: 100800, rate: 0.12 },
+        { upTo: 211400, rate: 0.22 },
+        { upTo: 403550, rate: 0.24 },
+        { upTo: 512450, rate: 0.32 },
+        { upTo: 768700, rate: 0.35 },
+        { upTo: Infinity, rate: 0.37 }
+      ],
+      'Married Separately': [
+        { upTo: 12400, rate: 0.1 },
+        { upTo: 50400, rate: 0.12 },
+        { upTo: 105700, rate: 0.22 },
+        { upTo: 201775, rate: 0.24 },
+        { upTo: 256225, rate: 0.32 },
+        { upTo: 640600, rate: 0.35 },
+        { upTo: Infinity, rate: 0.37 }
+      ],
+      'Head of Household': [
+        { upTo: 12400, rate: 0.1 },
+        { upTo: 50400, rate: 0.12 },
+        { upTo: 105700, rate: 0.22 },
+        { upTo: 201775, rate: 0.24 },
+        { upTo: 256225, rate: 0.32 },
+        { upTo: 640600, rate: 0.35 },
+        { upTo: Infinity, rate: 0.37 }
+      ]
+    },
+    'CA': {
+      'Single': [
+        { upTo: 58523, rate: 0.14 },
+        { upTo: 117045, rate: 0.205 },
+        { upTo: 181440, rate: 0.26 },
+        { upTo: 258482, rate: 0.29 },
+        { upTo: Infinity, rate: 0.33 }
+      ],
+      'Married': [
+        { upTo: 58523, rate: 0.14 },
+        { upTo: 117045, rate: 0.205 },
+        { upTo: 181440, rate: 0.26 },
+        { upTo: 258482, rate: 0.29 },
+        { upTo: Infinity, rate: 0.33 }
+      ],
+      'Married Separately': [
+        { upTo: 58523, rate: 0.14 },
+        { upTo: 117045, rate: 0.205 },
+        { upTo: 181440, rate: 0.26 },
+        { upTo: 258482, rate: 0.29 },
+        { upTo: Infinity, rate: 0.33 }
+      ],
+      'Head of Household': [
+        { upTo: 58523, rate: 0.14 },
+        { upTo: 117045, rate: 0.205 },
+        { upTo: 181440, rate: 0.26 },
+        { upTo: 258482, rate: 0.29 },
+        { upTo: Infinity, rate: 0.33 }
+      ]
+    },
+    'IN': {
+      'Single': [
+        { upTo: 400000, rate: 0.0 },
+        { upTo: 800000, rate: 0.05 },
+        { upTo: 1200000, rate: 0.1 },
+        { upTo: 1600000, rate: 0.15 },
+        { upTo: 2000000, rate: 0.2 },
+        { upTo: 2400000, rate: 0.25 },
+        { upTo: Infinity, rate: 0.3 }
+      ],
+      'Married': [
+        { upTo: 400000, rate: 0.0 },
+        { upTo: 800000, rate: 0.05 },
+        { upTo: 1200000, rate: 0.1 },
+        { upTo: 1600000, rate: 0.15 },
+        { upTo: 2000000, rate: 0.2 },
+        { upTo: 2400000, rate: 0.25 },
+        { upTo: Infinity, rate: 0.3 }
+      ],
+      'Married Separately': [
+        { upTo: 400000, rate: 0.0 },
+        { upTo: 800000, rate: 0.05 },
+        { upTo: 1200000, rate: 0.1 },
+        { upTo: 1600000, rate: 0.15 },
+        { upTo: 2000000, rate: 0.2 },
+        { upTo: 2400000, rate: 0.25 },
+        { upTo: Infinity, rate: 0.3 }
+      ],
+      'Head of Household': [
+        { upTo: 400000, rate: 0.0 },
+        { upTo: 800000, rate: 0.05 },
+        { upTo: 1200000, rate: 0.1 },
+        { upTo: 1600000, rate: 0.15 },
+        { upTo: 2000000, rate: 0.2 },
+        { upTo: 2400000, rate: 0.25 },
+        { upTo: Infinity, rate: 0.3 }
+      ]
+    },
+    'AU': {
+      'Single': [
+        { upTo: 18200, rate: 0.0 },
+        { upTo: 45000, rate: 0.15 },
+        { upTo: 135000, rate: 0.3 },
+        { upTo: 190000, rate: 0.37 },
+        { upTo: Infinity, rate: 0.45 }
+      ],
+      'Married': [
+        { upTo: 18200, rate: 0.0 },
+        { upTo: 45000, rate: 0.15 },
+        { upTo: 135000, rate: 0.3 },
+        { upTo: 190000, rate: 0.37 },
+        { upTo: Infinity, rate: 0.45 }
+      ],
+      'Married Separately': [
+        { upTo: 18200, rate: 0.0 },
+        { upTo: 45000, rate: 0.15 },
+        { upTo: 135000, rate: 0.3 },
+        { upTo: 190000, rate: 0.37 },
+        { upTo: Infinity, rate: 0.45 }
+      ],
+      'Head of Household': [
+        { upTo: 18200, rate: 0.0 },
+        { upTo: 45000, rate: 0.15 },
+        { upTo: 135000, rate: 0.3 },
+        { upTo: 190000, rate: 0.37 },
+        { upTo: Infinity, rate: 0.45 }
+      ]
+    },
+    'UK': {
+      'Single': [
+        { upTo: 12570, rate: 0.0 },
+        { upTo: 50270, rate: 0.2 },
+        { upTo: 125140, rate: 0.4 },
+        { upTo: Infinity, rate: 0.45 }
+      ],
+      'Married': [
+        { upTo: 12570, rate: 0.0 },
+        { upTo: 50270, rate: 0.2 },
+        { upTo: 125140, rate: 0.4 },
+        { upTo: Infinity, rate: 0.45 }
+      ],
+      'Married Separately': [
+        { upTo: 12570, rate: 0.0 },
+        { upTo: 50270, rate: 0.2 },
+        { upTo: 125140, rate: 0.4 },
+        { upTo: Infinity, rate: 0.45 }
+      ],
+      'Head of Household': [
+        { upTo: 12570, rate: 0.0 },
+        { upTo: 50270, rate: 0.2 },
+        { upTo: 125140, rate: 0.4 },
+        { upTo: Infinity, rate: 0.45 }
+      ]
+    }
+  };
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService
@@ -248,21 +419,22 @@ export class TaxEstimator implements OnInit {
     const healthInsurance = val.healthInsurance || 0;
     const homeOffice = val.homeOffice || 0;
 
+    // Deductions & taxable income matching backend formulas
     const totalDeductions = expenses + retirement + healthInsurance + homeOffice;
     const taxableIncomeQuarter = Math.max(0, grossIncome - totalDeductions);
     const annualizedTaxableIncome = taxableIncomeQuarter * 4;
 
     // Calculate federal/national tax on annualized income
     const federalTaxAnnual = this.calculateFederalTax(val.country, annualizedTaxableIncome, val.filingStatus);
-    const federalTaxQuarter = federalTaxAnnual / 4;
+    const federalTaxQuarter = Math.round((federalTaxAnnual / 4) * 100) / 100;
 
     // Calculate state tax
     const stateConfig = this.availableStates.find(s => s.value === val.state);
     const stateTaxRate = stateConfig ? stateConfig.taxRate : 0;
     const stateTaxAnnual = annualizedTaxableIncome * stateTaxRate;
-    const stateTaxQuarter = stateTaxAnnual / 4;
+    const stateTaxQuarter = Math.round((stateTaxAnnual / 4) * 100) / 100;
 
-    const totalEstimatedTaxQuarter = federalTaxQuarter + stateTaxQuarter;
+    const totalEstimatedTaxQuarter = Math.round((federalTaxQuarter + stateTaxQuarter) * 100) / 100;
 
     // Results assignment
     this.summaryGrossIncome = grossIncome;
@@ -271,7 +443,12 @@ export class TaxEstimator implements OnInit {
     this.summaryFederalTax = federalTaxQuarter;
     this.summaryStateTax = stateTaxQuarter;
     this.summaryEstimatedTax = totalEstimatedTaxQuarter;
-    this.summaryEffectiveRate = grossIncome > 0 ? (totalEstimatedTaxQuarter / grossIncome) * 100 : 0;
+    
+    // Effective tax rate 
+    this.summaryEffectiveRate = grossIncome > 0 
+      ? Math.round((totalEstimatedTaxQuarter / grossIncome) * 10000) / 100 
+      : 0;
+
     this.calculatedQuarter = val.quarter;
     this.dueDate = this.getQuarterDueDate(val.quarter);
 
@@ -279,82 +456,42 @@ export class TaxEstimator implements OnInit {
   }
 
   private calculateFederalTax(country: string, income: number, filingStatus: string): number {
-    let tax = 0;
-
-    switch (country) {
-      case 'US':
-        // Simplified US federal tax slabs
-        if (filingStatus === 'Married (Joint)') {
-          const brackets = [23200, 94300, 201050];
-          const rates = [0.10, 0.12, 0.22, 0.24];
-          tax = this.applyBrackets(income, brackets, rates);
-        } else {
-          const brackets = [11600, 47150, 100525, 191950];
-          const rates = [0.10, 0.12, 0.22, 0.24, 0.32];
-          tax = this.applyBrackets(income, brackets, rates);
-        }
-        break;
-
-      case 'CA':
-        // Simplified Canada federal slabs
-        const caBrackets = [55867, 111733, 173205];
-        const caRates = [0.15, 0.205, 0.26, 0.29];
-        tax = this.applyBrackets(income, caBrackets, caRates);
-        break;
-
-      case 'UK':
-        // Simplified UK income tax
-        const ukBrackets = [12570, 50270, 125140];
-        const ukRates = [0.00, 0.20, 0.40, 0.45];
-        tax = this.applyBrackets(income, ukBrackets, ukRates);
-        break;
-
-      case 'AU':
-        // Simplified Australia tax
-        const auBrackets = [18200, 45000, 120000, 180000];
-        const auRates = [0.00, 0.16, 0.30, 0.37, 0.45];
-        tax = this.applyBrackets(income, auBrackets, auRates);
-        break;
-
-      case 'IN':
-        // Simplified India slabs (new tax regime)
-        const inBrackets = [400000, 800000, 1200000, 1600000, 2000000, 2400000];
-        const inRates = [0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30];
-        tax = this.applyBrackets(income, inBrackets, inRates);
-        break;
-
-      default:
-        tax = income * 0.15; // fallback flat 15%
+    let mappedStatus = filingStatus;
+    if (filingStatus === 'Married (Joint)') {
+      mappedStatus = 'Married';
+    } else if (filingStatus === 'Married (Separate)') {
+      mappedStatus = 'Married Separately';
     }
 
-    return tax;
-  }
+    const slabs = this.taxSlabs[country]?.[mappedStatus];
+    if (!slabs) {
+      return 0;
+    }
 
-  private applyBrackets(income: number, brackets: number[], rates: number[]): number {
-    let tax = 0;
-    let previousBracket = 0;
+    let annualTax = 0;
+    let previousLimit = 0;
 
-    for (let i = 0; i < brackets.length; i++) {
-      const currentBracket = brackets[i];
-      if (income > currentBracket) {
-        tax += (currentBracket - previousBracket) * rates[i];
-        previousBracket = currentBracket;
+    for (const slab of slabs) {
+      if (income > previousLimit) {
+        const taxableAtThisSlab = Math.min(income, slab.upTo) - previousLimit;
+        annualTax += taxableAtThisSlab * slab.rate;
+        previousLimit = slab.upTo;
       } else {
-        tax += (income - previousBracket) * rates[i];
-        return tax;
+        break;
       }
     }
 
-    // Amount above the last bracket
-    tax += (income - previousBracket) * rates[rates.length - 1];
-    return tax;
+    return annualTax;
   }
 
   private getQuarterDueDate(quarter: string): string {
-    if (quarter.includes('Q1')) return 'April 15, 2026';
-    if (quarter.includes('Q2')) return 'June 15, 2026';
-    if (quarter.includes('Q3')) return 'September 15, 2026';
-    return 'January 15, 2027';
+    const yearMatch = quarter.match(/\d{4}/);
+    const year = yearMatch ? parseInt(yearMatch[0], 10) : 2026;
+
+    if (quarter.includes('Q1')) return `April 15, ${year}`;
+    if (quarter.includes('Q2')) return `June 15, ${year}`;
+    if (quarter.includes('Q3')) return `September 15, ${year}`;
+    return `January 15, ${year + 1}`;
   }
 
   getCountryName(code: string): string {
