@@ -1,56 +1,128 @@
 const taxSlabs = require("../utils/taxSlabs");
+const { getStateTaxRate } = require("../utils/stateTaxRates");
 
-function calculateEstimatedTax(country, filingStatus, taxableIncome) {
+// National tax: quarterly taxable income -> annualize -> apply slabs -> back to quarterly
+function calculateNationalTax(country, filingStatus, quarterlyTaxableIncome) {
   const slabs = taxSlabs[country]?.[filingStatus];
   if (!slabs) {
     throw new Error("Tax slabs not available for this country/filing status");
   }
 
-  let tax = 0;
+  const annualTaxableIncome = quarterlyTaxableIncome * 4;
+
+  let annualTax = 0;
   let previousLimit = 0;
 
   for (const slab of slabs) {
-    if (taxableIncome > previousLimit) {
+    if (annualTaxableIncome > previousLimit) {
       const taxableAtThisSlab =
-        Math.min(taxableIncome, slab.upTo) - previousLimit;
-      tax += taxableAtThisSlab * slab.rate;
+        Math.min(annualTaxableIncome, slab.upTo) - previousLimit;
+      annualTax += taxableAtThisSlab * slab.rate;
       previousLimit = slab.upTo;
     } else {
       break;
     }
   }
 
-  // Annual estimate ko quarterly me convert karna
-  return Math.round((tax / 4) * 100) / 100;
+  return Math.round((annualTax / 4) * 100) / 100;
 }
 
-function getTaxableIncome(
+// State tax: flat rate, no slabs
+function calculateStateTax(country, state, quarterlyTaxableIncome) {
+  const rate = getStateTaxRate(country, state);
+  const annualTaxableIncome = quarterlyTaxableIncome * 4;
+  const annualStateTax = annualTaxableIncome * rate;
+  return Math.round((annualStateTax / 4) * 100) / 100;
+}
+
+// Quarterly taxable income = quarterly gross income - quarterly total deductions
+function getQuarterlyTaxableIncome(quarterlyGrossIncome, deductions) {
+  const totalDeductions =
+    (deductions.businessExpenses || 0) +
+    (deductions.retirementContribution || 0) +
+    (deductions.healthInsurancePremiums || 0) +
+    (deductions.homeOfficeDeduction || 0);
+
+  return {
+    totalDeductions,
+    taxableIncome: Math.max(0, quarterlyGrossIncome - totalDeductions),
+  };
+}
+
+// Due dates per quarter (for a given year)
+function getDueDateForQuarter(quarter, year) {
+  const dueDates = {
+    Q1: new Date(`${year}-04-15`),
+    Q2: new Date(`${year}-06-15`),
+    Q3: new Date(`${year}-09-15`),
+    Q4: new Date(`${year + 1}-01-15`),
+  };
+  return dueDates[quarter];
+}
+
+function getQuarterlyDueDates(year) {
+  return [
+    { quarter: "Q1", dueDate: getDueDateForQuarter("Q1", year) },
+    { quarter: "Q2", dueDate: getDueDateForQuarter("Q2", year) },
+    { quarter: "Q3", dueDate: getDueDateForQuarter("Q3", year) },
+    { quarter: "Q4", dueDate: getDueDateForQuarter("Q4", year) },
+  ];
+}
+
+// Full summary — this is what the Tax Estimator page needs
+function getFullTaxSummary({
+  country,
+  state,
+  filingStatus,
+  quarter,
+  year,
   grossIncome,
   businessExpenses,
   retirementContribution,
   healthInsurancePremiums,
   homeOfficeDeduction,
-) {
-  const totalDeductions =
-    (businessExpenses || 0) +
-    (retirementContribution || 0) +
-    (healthInsurancePremiums || 0) +
-    (homeOfficeDeduction || 0);
+}) {
+  const { totalDeductions, taxableIncome } = getQuarterlyTaxableIncome(
+    grossIncome,
+    {
+      businessExpenses,
+      retirementContribution,
+      healthInsurancePremiums,
+      homeOfficeDeduction,
+    },
+  );
 
-  return Math.max(0, grossIncome - totalDeductions);
-}
+  const nationalTax = calculateNationalTax(
+    country,
+    filingStatus,
+    taxableIncome,
+  );
+  const stateTax = calculateStateTax(country, state, taxableIncome);
+  const totalEstimatedTax = Math.round((nationalTax + stateTax) * 100) / 100;
+  const effectiveTaxRate =
+    grossIncome > 0
+      ? Math.round((totalEstimatedTax / grossIncome) * 10000) / 100
+      : 0;
+  const dueDate = getDueDateForQuarter(quarter, year);
 
-function getQuarterlyDueDates(year) {
-  return [
-    { quarter: "Q1", dueDate: new Date(`${year}-04-15`) },
-    { quarter: "Q2", dueDate: new Date(`${year}-06-15`) },
-    { quarter: "Q3", dueDate: new Date(`${year}-09-15`) },
-    { quarter: "Q4", dueDate: new Date(`${year + 1}-01-15`) },
-  ];
+  return {
+    grossIncome,
+    totalDeductions,
+    taxableIncome,
+    nationalTax,
+    stateTax,
+    totalEstimatedTax,
+    effectiveTaxRate,
+    quarter,
+    dueDate,
+  };
 }
 
 module.exports = {
-  calculateEstimatedTax,
-  getTaxableIncome,
+  calculateNationalTax,
+  calculateStateTax,
+  getQuarterlyTaxableIncome,
+  getDueDateForQuarter,
   getQuarterlyDueDates,
+  getFullTaxSummary,
 };
