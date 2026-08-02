@@ -44,8 +44,8 @@
             <label for="filingStatus">Filing Status</label>
             <select id="filingStatus" formControlName="filingStatus">
               <option value="Single">Single</option>
-              <option value="Married (Joint)">Married (Jointly)</option>
-              <option value="Married (Separate)">Married (Separately)</option>
+              <option value="Married">Married (Jointly)</option>
+              <option value="Married Separately">Married (Separately)</option>
               <option value="Head of Household">Head of Household</option>
             </select>
           </div>
@@ -53,10 +53,10 @@
           <div class="form-group flex-1">
             <label for="quarter">Quarter</label>
             <select id="quarter" formControlName="quarter">
-              <option value="Q1 (Jan-Mar 2026)">Q1 (Jan-Mar 2026)</option>
-              <option value="Q2 (Apr-Jun 2026)">Q2 (Apr-Jun 2026)</option>
-              <option value="Q3 (Jul-Sep 2026)">Q3 (Jul-Sep 2026)</option>
-              <option value="Q4 (Oct-Dec 2026)">Q4 (Oct-Dec 2026)</option>
+              <option value="Q1">Q1 (Jan-Mar 2026)</option>
+              <option value="Q2">Q2 (Apr-Jun 2026)</option>
+              <option value="Q3">Q3 (Jul-Sep 2026)</option>
+              <option value="Q4">Q4 (Oct-Dec 2026)</option>
             </select>
           </div>
         </div>
@@ -178,6 +178,37 @@
               <span class="item-label"><i class="ph ph-calendar-blank"></i> Due Date</span>
               <span class="item-value">{{ dueDate }}</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Calculation History Card -->
+      <div class="card summary-card" style="margin-top: 1.5rem;" *ngIf="history.length > 0">
+        <div class="card-header">
+          <h2 class="card-title"><i class="ph ph-clock-history-bold"></i> Saved History</h2>
+          <p class="card-subtitle">Previous quarterly evaluations</p>
+        </div>
+        <div class="history-list" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+          <div 
+            *ngFor="let item of history" 
+            style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-main);"
+          >
+            <div style="cursor: pointer; flex-grow: 1;" (click)="loadHistoryItem(item)">
+              <div style="font-weight: 600; font-size: 0.9rem;">
+                {{ item.quarter }} {{ item.year }} – {{ getCountryName(item.country) }}<span *ngIf="item.state"> ({{ item.state }})</span>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
+                Tax Due: <strong>{{ getItemCurrencySymbol(item.country) }}{{ item.estimatedTax | number:'1.2-2' }}</strong> (Gross: {{ getItemCurrencySymbol(item.country) }}{{ item.grossIncomeForQuarter | number:'1.0-0' }})
+              </div>
+            </div>
+            <button 
+              type="button" 
+              (click)="deleteHistoryItem(item.id, $event)" 
+              style="background: transparent; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; display: flex; align-items: center;"
+              title="Delete Estimate"
+            >
+              🗑️
+            </button>
           </div>
         </div>
       </div>

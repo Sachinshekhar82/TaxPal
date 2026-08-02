@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../core/services/auth';
+import { TaxEstimateService, TaxEstimateResult } from '../core/services/tax-estimate';
 
 interface StateOption {
   value: string;
@@ -32,6 +33,7 @@ export class TaxEstimator implements OnInit {
   currencySymbol = '$';
   availableStates: StateOption[] = [];
   hasStates = true;
+  history: TaxEstimateResult[] = [];
 
   // Calculation Results
   isCalculated = false;
@@ -359,7 +361,9 @@ export class TaxEstimator implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private taxEstimateService: TaxEstimateService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -368,6 +372,7 @@ export class TaxEstimator implements OnInit {
     const defaultCountry = user && this.countryConfigs[user.country] ? user.country : 'US';
 
     this.initForm(defaultCountry);
+    this.loadHistory();
   }
 
   private initForm(defaultCountry: string): void {
@@ -375,7 +380,7 @@ export class TaxEstimator implements OnInit {
       country: [defaultCountry, Validators.required],
       state: ['', Validators.required],
       filingStatus: ['Single', Validators.required],
-      quarter: ['Q2 (Apr-Jun 2026)', Validators.required],
+      quarter: ['Q2', Validators.required],
       grossIncome: [null, [Validators.required, Validators.min(0)]],
       expenses: [null, [Validators.min(0)]],
       retirement: [null, [Validators.min(0)]],
@@ -436,7 +441,7 @@ export class TaxEstimator implements OnInit {
 
     const totalEstimatedTaxQuarter = Math.round((federalTaxQuarter + stateTaxQuarter) * 100) / 100;
 
-    // Results assignment
+    // Local results assignment (for immediate UI response)
     this.summaryGrossIncome = grossIncome;
     this.summaryTotalDeductions = totalDeductions;
     this.summaryTaxableIncome = taxableIncomeQuarter;
@@ -451,8 +456,45 @@ export class TaxEstimator implements OnInit {
 
     this.calculatedQuarter = val.quarter;
     this.dueDate = this.getQuarterDueDate(val.quarter);
-
     this.isCalculated = true;
+
+    // Save to the database via API
+    const payload = {
+      country: val.country,
+      state: val.state,
+      filingStatus: val.filingStatus,
+      quarter: val.quarter,
+      year: 2026,
+      grossIncomeForQuarter: grossIncome,
+      businessExpenses: expenses,
+      retirementContribution: retirement,
+      healthInsurancePremiums: healthInsurance,
+      homeOfficeDeduction: homeOffice
+    };
+
+    this.taxEstimateService.saveEstimate(payload).subscribe({
+      next: (res) => {
+        if (res) {
+          // Update the UI fields with exact figures computed by backend
+          this.summaryGrossIncome = res.grossIncomeForQuarter;
+          this.summaryTotalDeductions = res.totalDeductions;
+          this.summaryTaxableIncome = res.taxableIncome;
+          this.summaryFederalTax = res.nationalTax;
+          this.summaryStateTax = res.stateTax;
+          this.summaryEstimatedTax = res.estimatedTax;
+          this.summaryEffectiveRate = res.effectiveTaxRate;
+          this.calculatedQuarter = res.quarter;
+          this.dueDate = this.formatDueDate(res.dueDate);
+          this.isCalculated = true;
+          this.cdr.detectChanges();
+          
+          this.loadHistory();
+        }
+      },
+      error: (err) => {
+        console.error('Error saving estimate to backend:', err);
+      }
+    });
   }
 
   private calculateFederalTax(country: string, income: number, filingStatus: string): number {
@@ -484,10 +526,7 @@ export class TaxEstimator implements OnInit {
     return annualTax;
   }
 
-  private getQuarterDueDate(quarter: string): string {
-    const yearMatch = quarter.match(/\d{4}/);
-    const year = yearMatch ? parseInt(yearMatch[0], 10) : 2026;
-
+  private getQuarterDueDate(quarter: string, year: number = 2026): string {
     if (quarter.includes('Q1')) return `April 15, ${year}`;
     if (quarter.includes('Q2')) return `June 15, ${year}`;
     if (quarter.includes('Q3')) return `September 15, ${year}`;
@@ -503,5 +542,77 @@ export class TaxEstimator implements OnInit {
       case 'IN': return 'India';
       default: return code;
     }
+  }
+
+  loadHistory(): void {
+    this.taxEstimateService.getEstimates().subscribe({
+      next: (data) => {
+        this.history = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading estimates history:', err);
+      }
+    });
+  }
+
+  loadHistoryItem(item: TaxEstimateResult): void {
+    this.updateCountryFields(item.country);
+
+    this.taxForm.patchValue({
+      country: item.country,
+      state: item.state,
+      filingStatus: item.filingStatus,
+      quarter: item.quarter,
+      grossIncome: item.grossIncomeForQuarter,
+      expenses: item.businessExpenses,
+      retirement: item.retirementContribution,
+      healthInsurance: item.healthInsurancePremiums,
+      homeOffice: item.homeOfficeDeduction
+    });
+
+    this.summaryGrossIncome = item.grossIncomeForQuarter;
+    this.summaryTotalDeductions = item.totalDeductions;
+    this.summaryTaxableIncome = item.taxableIncome;
+    this.summaryFederalTax = item.nationalTax;
+    this.summaryStateTax = item.stateTax;
+    this.summaryEstimatedTax = item.estimatedTax;
+    this.summaryEffectiveRate = item.effectiveTaxRate;
+    this.calculatedQuarter = item.quarter;
+    this.dueDate = this.formatDueDate(item.dueDate);
+    this.isCalculated = true;
+    this.cdr.detectChanges();
+  }
+
+  deleteHistoryItem(id: string | undefined, event: Event): void {
+    event.stopPropagation();
+    if (!id) return;
+    if (confirm('Are you sure you want to delete this tax estimate calculation?')) {
+      this.taxEstimateService.deleteEstimate(id).subscribe({
+        next: (success) => {
+          if (success) {
+            this.loadHistory();
+            this.isCalculated = false;
+            this.cdr.detectChanges();
+          }
+        },
+        error: (err) => {
+          console.error('Error deleting tax estimate:', err);
+          alert('Failed to delete tax estimate.');
+        }
+      });
+    }
+  }
+
+  formatDueDate(dateStr: string | undefined): string {
+    if (!dateStr) return '';
+    const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) return dateStr;
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;
+  }
+
+  getItemCurrencySymbol(countryCode: string): string {
+    return this.countryConfigs[countryCode]?.currencySymbol || '$';
   }
 }
