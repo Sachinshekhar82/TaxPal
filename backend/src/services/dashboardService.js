@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Transaction = require("../models/Transaction");
 
 // Existing Dashboard API
@@ -24,12 +25,12 @@ const getDashboardData = async (userId) => {
   };
 };
 
-// NEW Spending Breakdown API
+// Spending Breakdown API
 const getSpendingBreakdown = async (userId) => {
   const breakdown = await Transaction.aggregate([
     {
       $match: {
-        userId: Transaction.db.base.Types.ObjectId.createFromHexString(userId),
+        userId: new mongoose.Types.ObjectId(userId),
         type: "expense",
       },
     },
