@@ -21,6 +21,29 @@ interface Slab {
   rate: number;
 }
 
+export interface CalendarAlert {
+  id: string;
+  estimateId: string;
+  type: 'reminder' | 'payment';
+  title: string;
+  date: Date;
+  dateStr: string;
+  monthYearStr: string;
+  description: string;
+  isRead?: boolean;
+  isPaymentDone?: boolean;
+  estimatedTax?: number;
+  currencySymbol?: string;
+  daysRemaining?: number;
+  status?: string;
+  dueDateForCalculation: string | Date;
+}
+
+export interface AlertGroup {
+  monthYear: string;
+  alerts: CalendarAlert[];
+}
+
 @Component({
   selector: 'app-tax-estimator',
   standalone: true,
@@ -34,6 +57,7 @@ export class TaxEstimator implements OnInit {
   availableStates: StateOption[] = [];
   hasStates = true;
   history: TaxEstimateResult[] = [];
+  alertGroups: AlertGroup[] = [];
 
   // Calculation Results
   isCalculated = false;
@@ -548,6 +572,7 @@ export class TaxEstimator implements OnInit {
     this.taxEstimateService.getEstimates().subscribe({
       next: (data) => {
         this.history = data;
+        this.generateAlerts();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -615,4 +640,213 @@ export class TaxEstimator implements OnInit {
   getItemCurrencySymbol(countryCode: string): string {
     return this.countryConfigs[countryCode]?.currencySymbol || '$';
   }
+
+  // Calendar view helper methods
+  getQuarterFullName(quarter: string): string {
+    if (quarter.includes('Q1')) return 'First';
+    if (quarter.includes('Q2')) return 'Second';
+    if (quarter.includes('Q3')) return 'Third';
+    if (quarter.includes('Q4')) return 'Fourth';
+    return quarter;
+  }
+
+  formatShortDate(date: Date): string {
+    const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${monthsShort[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  }
+
+  formatMonthYear(date: Date): string {
+    const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${monthsFull[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  private getStorageKey(): string {
+    const user = this.authService.currentUser;
+    const userId = user ? user.id || user.email || 'guest' : 'guest';
+    return `taxpal_alerts_state_${userId}`;
+  }
+
+  getAlertsState(): { readAlertIds: string[]; paidAlertIds: string[] } {
+    const key = this.getStorageKey();
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        return {
+          readAlertIds: Array.isArray(parsed.readAlertIds) ? parsed.readAlertIds : [],
+          paidAlertIds: Array.isArray(parsed.paidAlertIds) ? parsed.paidAlertIds : []
+        };
+      } catch (e) {
+        console.error('Failed to parse alerts state from localStorage:', e);
+      }
+    }
+    return { readAlertIds: [], paidAlertIds: [] };
+  }
+
+  saveAlertsState(state: { readAlertIds: string[]; paidAlertIds: string[] }): void {
+    const key = this.getStorageKey();
+    localStorage.setItem(key, JSON.stringify(state));
+  }
+
+  generateAlerts(): void {
+    const state = this.getAlertsState();
+    const list: CalendarAlert[] = [];
+
+    for (const item of this.history) {
+      if (!item.id) continue;
+      const dueDateObj = item.dueDate ? new Date(item.dueDate) : null;
+      if (!dueDateObj || isNaN(dueDateObj.getTime())) continue;
+
+      // Calculate reminder date: 14 days before due date
+      const reminderDate = new Date(dueDateObj.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const reminderId = `${item.id}_reminder`;
+      const paymentId = `${item.id}_payment`;
+
+      const isRead = state.readAlertIds.includes(reminderId);
+      const isPaymentDone = state.paidAlertIds.includes(paymentId);
+      const currencySymbol = this.getItemCurrencySymbol(item.country);
+
+      // Dynamic calculation using the new utility functions
+      const daysRemaining = this.calculateDaysRemaining(dueDateObj);
+      const status = this.getReminderStatus(daysRemaining);
+
+      // 1. Reminder Alert
+      list.push({
+        id: reminderId,
+        estimateId: item.id,
+        type: 'reminder',
+        title: `Reminder: ${item.quarter} Estimated Tax Payment`,
+        date: reminderDate,
+        dateStr: this.formatShortDate(reminderDate),
+        monthYearStr: this.formatMonthYear(reminderDate),
+        description: `Reminder for upcoming ${item.quarter} estimated tax payment due on ${this.formatDueDate(item.dueDate)}`,
+        isRead,
+        estimatedTax: item.estimatedTax,
+        currencySymbol,
+        daysRemaining,
+        status,
+        dueDateForCalculation: dueDateObj
+      });
+
+      // 2. Due Payment Alert
+      list.push({
+        id: paymentId,
+        estimateId: item.id,
+        type: 'payment',
+        title: `Due: ${item.quarter} Estimated Tax Payment`,
+        date: dueDateObj,
+        dateStr: this.formatShortDate(dueDateObj),
+        monthYearStr: this.formatMonthYear(dueDateObj),
+        description: `${this.getQuarterFullName(item.quarter)} quarter estimated tax payment due: ${currencySymbol}${item.estimatedTax}`,
+        isPaymentDone,
+        estimatedTax: item.estimatedTax,
+        currencySymbol,
+        daysRemaining,
+        status,
+        dueDateForCalculation: dueDateObj
+      });
+    }
+
+    // Sort reminders by due date
+    this.sortByDueDate(list);
+
+    // Group by monthYearStr
+    const groupsMap = new Map<string, CalendarAlert[]>();
+    for (const alert of list) {
+      if (!groupsMap.has(alert.monthYearStr)) {
+        groupsMap.set(alert.monthYearStr, []);
+      }
+      groupsMap.get(alert.monthYearStr)!.push(alert);
+    }
+
+    this.alertGroups = Array.from(groupsMap.entries()).map(([monthYear, alerts]) => ({
+      monthYear,
+      alerts
+    }));
+  }
+
+  markAsRead(alertId: string, event: Event): void {
+    event.stopPropagation();
+    const state = this.getAlertsState();
+    if (!state.readAlertIds.includes(alertId)) {
+      state.readAlertIds.push(alertId);
+      this.saveAlertsState(state);
+      this.generateAlerts();
+      this.cdr.detectChanges();
+    }
+  }
+
+  markAsPaid(alertId: string, event: Event): void {
+    event.stopPropagation();
+    const state = this.getAlertsState();
+    if (!state.paidAlertIds.includes(alertId)) {
+      state.paidAlertIds.push(alertId);
+      this.saveAlertsState(state);
+      this.generateAlerts();
+      this.cdr.detectChanges();
+    }
+  }
+
+  markAsUnread(alertId: string, event: Event): void {
+    event.stopPropagation();
+    const state = this.getAlertsState();
+    const index = state.readAlertIds.indexOf(alertId);
+    if (index > -1) {
+      state.readAlertIds.splice(index, 1);
+      this.saveAlertsState(state);
+      this.generateAlerts();
+      this.cdr.detectChanges();
+    }
+  }
+
+  markAsUnpaid(alertId: string, event: Event): void {
+    event.stopPropagation();
+    const state = this.getAlertsState();
+    const index = state.paidAlertIds.indexOf(alertId);
+    if (index > -1) {
+      state.paidAlertIds.splice(index, 1);
+      this.saveAlertsState(state);
+      this.generateAlerts();
+      this.cdr.detectChanges();
+    }
+  }
+
+  // User-provided utility functions implemented in Angular frontend
+  getCurrentQuarter(date: Date = new Date()): string {
+    const month = date.getMonth() + 1;
+
+    if (month <= 3) return "Q1";
+    if (month <= 6) return "Q2";
+    if (month <= 9) return "Q3";
+    return "Q4";
+  }
+
+  getQuarterFromDate(date: string | Date): string {
+    const month = new Date(date).getMonth() + 1;
+
+    if (month <= 3) return "Q1";
+    if (month <= 6) return "Q2";
+    if (month <= 9) return "Q3";
+    return "Q4";
+  }
+
+  calculateDaysRemaining(dueDate: string | Date): number {
+    const today = new Date();
+    return Math.ceil(
+      (new Date(dueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
+
+  getReminderStatus(daysRemaining: number): string {
+    if (daysRemaining < 0) return "Overdue";
+    if (daysRemaining <= 7) return "Due Soon";
+    return "Upcoming";
+  }
+
+  sortByDueDate(reminders: CalendarAlert[]): CalendarAlert[] {
+    return reminders.sort(
+      (a, b) => new Date(a.dueDateForCalculation).getTime() - new Date(b.dueDateForCalculation).getTime()
+    );
+  }
 }
+
