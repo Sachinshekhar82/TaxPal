@@ -7,21 +7,69 @@ const taxEstimateSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    country: { type: String, required: true },
-    state: { type: String, default: "" },
-    quarter: { type: String, enum: ["Q1", "Q2", "Q3", "Q4"], required: true },
-    filingStatus: { type: String, default: "" },
-    grossIncome: { type: Number, required: true },
-    deductions: {
-      businessExpenses: { type: Number, default: 0 },
-      retirementContribution: { type: Number, default: 0 },
-      healthInsurancePremiums: { type: Number, default: 0 },
-      homeOfficeDeduction: { type: Number, default: 0 },
+
+    country: {
+      type: String,
+      default: "India",
     },
-    estimatedTax: { type: Number, required: true },
-    dueDate: { type: Date, required: true },
+
+    state: {
+      type: String,
+    },
+
+    quarter: {
+      type: String,
+      enum: ["Q1", "Q2", "Q3", "Q4"],
+      required: true,
+    },
+
+    filingStatus: {
+      type: String,
+      default: "Pending",
+    },
+
+    grossIncome: {
+      type: Number,
+      default: 0,
+    },
+
+    deductions: {
+      type: Number,
+      default: 0,
+    },
+
+    estimatedTax: {
+      type: Number,
+      default: 0,
+    },
+
+    dueDate: {
+      type: Date,
+      required: true,
+    },
+
+
+    // NEW FIELDS
+
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Completed"],
+      default: "Pending",
+    },
+
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("TaxEstimate", taxEstimateSchema);
+
+module.exports = mongoose.model(
+  "TaxEstimate",
+  taxEstimateSchema
+);

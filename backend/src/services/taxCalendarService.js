@@ -1,70 +1,80 @@
 const TaxEstimate = require("../models/TaxEstimate");
 
 const {
+  getQuarterFromDate,
   calculateDaysRemaining,
   getReminderStatus,
   sortByDueDate,
 } = require("../utils/taxCalendarUtils");
 
-// Get all reminders
-const getAllReminders = async (userId, year) => {
-  const filter = { userId };
+// ==============================
+// GET ALL REMINDERS
+// ==============================
+
+exports.getAllReminders = async (userId, year) => {
+  let query = {
+    userId: userId,
+  };
 
   if (year) {
-    const startDate = new Date(`${year}-01-01`);
-    const endDate = new Date(`${year}-12-31`);
-
-    filter.dueDate = {
-      $gte: startDate,
-      $lte: endDate,
+    query.dueDate = {
+      $gte: new Date(`${year}-01-01`),
+      $lte: new Date(`${year}-12-31`),
     };
   }
 
-  let reminders = await TaxEstimate.find(filter);
+  const reminders = await TaxEstimate.find(query);
 
-  // Sort reminders by due date
-  reminders = sortByDueDate(reminders);
-
-  // Add reminder status and days remaining
-  return reminders.map((reminder) => {
+  const formatted = reminders.map((reminder) => {
     const daysRemaining = calculateDaysRemaining(reminder.dueDate);
-    const status = getReminderStatus(daysRemaining);
 
     return {
       ...reminder.toObject(),
+
+      quarter:
+        reminder.quarter || getQuarterFromDate(reminder.dueDate),
+
       daysRemaining,
-      status,
+
+      status: getReminderStatus(daysRemaining),
     };
   });
+
+  return sortByDueDate(formatted);
 };
 
-// Get upcoming reminders
-const getUpcomingReminders = async (userId) => {
+// ==============================
+// GET UPCOMING REMINDERS
+// ==============================
+
+exports.getUpcomingReminders = async (userId) => {
   const today = new Date();
 
-  let reminders = await TaxEstimate.find({
+  const reminders = await TaxEstimate.find({
     userId,
-    dueDate: { $gte: today },
+    dueDate: {
+      $gte: today,
+    },
   });
 
-  // Sort reminders by due date
-  reminders = sortByDueDate(reminders);
-
-  // Add reminder status and days remaining
   return reminders.map((reminder) => {
     const daysRemaining = calculateDaysRemaining(reminder.dueDate);
-    const status = getReminderStatus(daysRemaining);
 
     return {
       ...reminder.toObject(),
+
       daysRemaining,
-      status,
+
+      status: getReminderStatus(daysRemaining),
     };
   });
 };
 
-// Get reminder by ID
-const getReminderById = async (userId, id) => {
+// ==============================
+// GET REMINDER BY ID
+// ==============================
+
+exports.getReminderById = async (id, userId) => {
   const reminder = await TaxEstimate.findOne({
     _id: id,
     userId,
@@ -75,17 +85,96 @@ const getReminderById = async (userId, id) => {
   }
 
   const daysRemaining = calculateDaysRemaining(reminder.dueDate);
-  const status = getReminderStatus(daysRemaining);
 
   return {
     ...reminder.toObject(),
+
     daysRemaining,
-    status,
+
+    status: getReminderStatus(daysRemaining),
   };
 };
 
-module.exports = {
-  getAllReminders,
-  getUpcomingReminders,
-  getReminderById,
+// ==============================
+// MARK AS READ
+// ==============================
+
+exports.markAsRead = async (id, userId) => {
+  const reminder = await TaxEstimate.findOne({
+    _id: id,
+    userId,
+  });
+
+  if (!reminder) {
+    throw new Error("Reminder not found");
+  }
+
+  reminder.isRead = true;
+
+  await reminder.save();
+
+  return reminder;
+};
+
+// ==============================
+// UNDO MARK AS READ
+// ==============================
+
+exports.undoMarkAsRead = async (id, userId) => {
+  const reminder = await TaxEstimate.findOne({
+    _id: id,
+    userId,
+  });
+
+  if (!reminder) {
+    throw new Error("Reminder not found");
+  }
+
+  reminder.isRead = false;
+
+  await reminder.save();
+
+  return reminder;
+};
+
+// ==============================
+// MARK PAYMENT AS COMPLETED
+// ==============================
+
+exports.markPaymentDone = async (id, userId) => {
+  const reminder = await TaxEstimate.findOne({
+    _id: id,
+    userId,
+  });
+
+  if (!reminder) {
+    throw new Error("Reminder not found");
+  }
+
+  reminder.paymentStatus = "Completed";
+
+  await reminder.save();
+
+  return reminder;
+};
+
+// ==============================
+// UNDO PAYMENT COMPLETED
+// ==============================
+
+exports.undoPaymentDone = async (id, userId) => {
+  const reminder = await TaxEstimate.findOne({
+    _id: id,
+    userId,
+  });
+
+  if (!reminder) {
+    throw new Error("Reminder not found");
+  }
+
+  reminder.paymentStatus = "Pending";
+
+  await reminder.save();
+
+  return reminder;
 };
