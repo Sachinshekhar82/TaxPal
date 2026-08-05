@@ -6,10 +6,10 @@ const { transactionValidation, validate } = require("../validators/transactionVa
 
 router.use(protect);
 
-router.post("/", transactionValidation, validate, transactionController.addTransaction);
+router.post("/", ...transactionValidation, validate, transactionController.addTransaction);
 router.get("/", transactionController.getAllTransactions);
 router.get("/:id", transactionController.getTransactionById);
-router.put("/:id", transactionValidation, validate, transactionController.updateTransaction);
+router.put("/:id", ...transactionValidation, validate, transactionController.updateTransaction);
 router.delete("/:id", transactionController.deleteTransaction);
 
 module.exports = router;

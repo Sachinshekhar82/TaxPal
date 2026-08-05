@@ -9,10 +9,10 @@ router.get("/default", categoryController.getDefaultCategories);
 router.post("/suggest", categoryController.suggestCategory);
 
 // Protected routes with express-validator middleware
-router.post("/", protect, createCategoryValidation, validate, categoryController.createCategory);
+router.post("/", protect, ...createCategoryValidation, validate, categoryController.createCategory);
 router.get("/", protect, categoryController.getCategories);
-router.get("/:id", protect, categoryIdValidation, validate, categoryController.getCategoryById);
-router.put("/:id", protect, categoryIdValidation, updateCategoryValidation, validate, categoryController.updateCategory);
-router.delete("/:id", protect, categoryIdValidation, validate, categoryController.deleteCategory);
+router.get("/:id", protect, ...categoryIdValidation, validate, categoryController.getCategoryById);
+router.put("/:id", protect, ...categoryIdValidation, ...updateCategoryValidation, validate, categoryController.updateCategory);
+router.delete("/:id", protect, ...categoryIdValidation, validate, categoryController.deleteCategory);
 
 module.exports = router;

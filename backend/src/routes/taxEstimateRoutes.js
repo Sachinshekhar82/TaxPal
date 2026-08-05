@@ -14,18 +14,18 @@ router.use(protect);
 
 router
   .route('/')
-  .post(createTaxEstimateValidation, validate, taxEstimateController.createTaxEstimate)
+  .post(...createTaxEstimateValidation, validate, taxEstimateController.createTaxEstimate)
   .get(taxEstimateController.getTaxEstimates);
 
 router
   .route('/:id')
-  .get(taxEstimateIdValidation, validate, taxEstimateController.getTaxEstimateById)
+  .get(...taxEstimateIdValidation, validate, taxEstimateController.getTaxEstimateById)
   .put(
-    taxEstimateIdValidation,
-    updateTaxEstimateValidation,
+    ...taxEstimateIdValidation,
+    ...updateTaxEstimateValidation,
     validate,
     taxEstimateController.updateTaxEstimate
   )
-  .delete(taxEstimateIdValidation, validate, taxEstimateController.deleteTaxEstimate);
+  .delete(...taxEstimateIdValidation, validate, taxEstimateController.deleteTaxEstimate);
 
 module.exports = router;

@@ -14,20 +14,22 @@ const categorySchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Income", "Expense"],
+      enum: ["income", "expense"],
       required: true,
     },
     isDefault: {
       type: Boolean,
-      default: false,
+      default: false, 
+    },
+    color: {
+      type: String,
+      default: "#6B7280", 
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true },
 );
 
-// Prevent duplicate category names for the same user
-categorySchema.index({ userId: 1, name: 1 }, { unique: true });
+
+categorySchema.index({ userId: 1, name: 1, type: 1 }, { unique: true });
 
 module.exports = mongoose.model("Category", categorySchema);
