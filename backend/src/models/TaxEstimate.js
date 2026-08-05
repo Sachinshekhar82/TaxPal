@@ -9,6 +9,7 @@ const taxEstimateSchema = new mongoose.Schema(
     },
     country: {
       type: String,
+      enum: ["US", "CA", "UK", "AU", "IN"],
       required: true,
     },
     state: {
@@ -17,7 +18,12 @@ const taxEstimateSchema = new mongoose.Schema(
     },
     filingStatus: {
       type: String,
-      enum: ["Single", "Married", "Married Separately", "Head of Household"],
+      enum: [
+        "Single",
+        "Married (Joint)",
+        "Married (Separately)",
+        "Head of Household",
+      ],
       required: true,
     },
     quarter: {
@@ -29,8 +35,6 @@ const taxEstimateSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-
-    // Quarterly inputs (as entered in the form — NOT annual)
     grossIncomeForQuarter: {
       type: Number,
       required: true,
@@ -41,13 +45,12 @@ const taxEstimateSchema = new mongoose.Schema(
     healthInsurancePremiums: { type: Number, default: 0 },
     homeOfficeDeduction: { type: Number, default: 0 },
 
-    // Calculated summary (quarterly figures)
     totalDeductions: { type: Number, required: true },
     taxableIncome: { type: Number, required: true },
     nationalTax: { type: Number, required: true },
     stateTax: { type: Number, required: true },
-    estimatedTax: { type: Number, required: true }, // nationalTax + stateTax
-    effectiveTaxRate: { type: Number, required: true }, // percentage
+    estimatedTax: { type: Number, required: true },
+    effectiveTaxRate: { type: Number, required: true },
 
     dueDate: {
       type: Date,
