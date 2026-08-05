@@ -88,6 +88,23 @@ TaxPal-Batch2
 - ✅ End-to-End Testing
 
 ---
+# 📌 Milestone 3 Features
+
+- ✅ Tax Estimation Module
+- ✅ Country/Region Selection
+- ✅ Tax Calculation Based on Regional Tax Slabs
+- ✅ Quarterly Tax Estimation
+- ✅ Tax Summary
+- ✅ Quarterly Tax Reminder Management
+- ✅ Calendar View for Tax Due Dates
+- ✅ Alert & Reminder Management
+- ✅ Tax Calculation APIs
+- ✅ MongoDB Atlas Integration
+- ✅ Frontend-Backend Integration
+- ✅ API Testing
+- ✅ End-to-End Testing
+
+---
 
 # 📊 Current Project Status
 
@@ -112,6 +129,8 @@ The following modules have been successfully completed and integrated:
 - Bug fixes and optimization
 - Project documentation
 - Git workflow implementation
+
+---
 
 ---
 
@@ -142,24 +161,6 @@ The following modules have been successfully implemented, tested, integrated, an
 - Git workflow implementation
 
 ---
-# 📌 Milestone 3 Features
-
-- ✅ Tax Estimation Module
-- ✅ Country/Region Selection
-- ✅ Tax Calculation Based on Regional Tax Slabs
-- ✅ Quarterly Tax Estimation
-- ✅ Tax Summary
-- ✅ Quarterly Tax Reminder Management
-- ✅ Calendar View for Tax Due Dates
-- ✅ Alert & Reminder Management
-- ✅ Tax Calculation APIs
-- ✅ MongoDB Atlas Integration
-- ✅ Frontend-Backend Integration
-- ✅ API Testing
-- ✅ End-to-End Testing
-
----
-
 
 ## ✅ Milestone 3 Completed
 
