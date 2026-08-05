@@ -329,3 +329,291 @@
 .text-danger {
   color: var(--error-color);
 }
+
+/* Tax Calendar Styles */
+.tax-calendar-card {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.calendar-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.timeline-month-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.timeline-month-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.timeline-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.calendar-alert-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.calendar-alert-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: rgba(79, 70, 229, 0.2);
+}
+
+.alert-reminder {
+  border-left: 4px solid var(--primary-color);
+}
+
+.alert-payment {
+  border-left: 4px solid #f59e0b; /* Amber */
+}
+
+.alert-read {
+  opacity: 0.75;
+}
+
+.alert-read .alert-title {
+  color: var(--text-muted);
+}
+
+.alert-paid {
+  opacity: 0.75;
+}
+
+.alert-paid .alert-title {
+  color: var(--text-muted);
+}
+
+.alert-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.alert-type-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.badge-reminder {
+  background-color: rgba(79, 70, 229, 0.1);
+  color: var(--primary-color);
+}
+
+.badge-payment {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.badge-read {
+  background-color: var(--border-color);
+  color: var(--text-muted);
+}
+
+.badge-paid {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.alert-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.alert-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.alert-date-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.alert-date-row i {
+  font-size: 0.9rem;
+}
+
+.alert-description {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0 0;
+}
+
+.alert-card-actions {
+  display: flex;
+  align-items: center;
+  margin-left: 1.5rem;
+}
+
+/* Action Buttons */
+.btn-action-read,
+.btn-action-paid {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-dark);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-action-read:hover {
+  background-color: rgba(79, 70, 229, 0.05);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-action-paid:hover {
+  background-color: rgba(16, 185, 129, 0.05);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+/* Status Indicators */
+.status-indicator-read {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0;
+}
+
+.status-indicator-paid {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #10b981;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0;
+}
+
+/* Status Pill Badges */
+.status-pill {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 750;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.status-overdue {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-duesoon {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.status-upcoming {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-completed {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+
+.status-indicator-read-container,
+.status-indicator-paid-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-undo {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.btn-undo:hover {
+  background-color: rgba(239, 68, 68, 0.05);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+@media (max-width: 576px) {
+  .calendar-alert-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .alert-card-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+  .btn-action-read,
+  .btn-action-paid {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
