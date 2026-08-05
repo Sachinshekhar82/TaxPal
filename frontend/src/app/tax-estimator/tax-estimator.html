@@ -287,7 +287,7 @@
                 type="button" 
                 *ngIf="alert.type === 'reminder' && !alert.isRead"
                 class="btn-action-read"
-                (click)="markAsRead(alert.id, $event)"
+                (click)="markAsRead(alert.estimateId, $event)"
               >
                 <i class="ph ph-check"></i> Mark as read
               </button>
@@ -300,7 +300,7 @@
                 <button 
                   type="button" 
                   class="btn-undo"
-                  (click)="markAsUnread(alert.id, $event)"
+                  (click)="markAsUnread(alert.estimateId, $event)"
                   title="Mark as unread"
                 >
                   <i class="ph ph-arrow-u-up-left"></i> Undo
@@ -312,7 +312,7 @@
                 type="button" 
                 *ngIf="alert.type === 'payment' && !alert.isPaymentDone"
                 class="btn-action-paid"
-                (click)="markAsPaid(alert.id, $event)"
+                (click)="markAsPaid(alert.estimateId, $event)"
               >
                 <i class="ph ph-coins"></i> Mark as payment done
               </button>
@@ -325,7 +325,7 @@
                 <button 
                   type="button" 
                   class="btn-undo btn-undo-paid"
-                  (click)="markAsUnpaid(alert.id, $event)"
+                  (click)="markAsUnpaid(alert.estimateId, $event)"
                   title="Mark as unpaid"
                 >
                   <i class="ph ph-arrow-u-up-left"></i> Undo
