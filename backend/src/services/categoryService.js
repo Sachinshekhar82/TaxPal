@@ -1,102 +1,107 @@
-const Category = require("../models/category");
+const Category = require("../models/Category");
 const defaultCategories = require("../utils/defaultCategories");
 
-// Get all categories of a user
-const getCategories = async (userId) => {
-  return await Category.find({ userId });
+const formatCategory = (c) => {
+  return {
+    id: c._id,
+    name: c.name,
+    type: c.type,
+    isDefault: c.isDefault,
+    color: c.color,
+  };
 };
 
-// Get default categories
+const createCategory = async (categoryData) => {
+  try {
+    const category = await Category.create(categoryData);
+    return formatCategory(category);
+  } catch (err) {
+    if (err.code === 11000) {
+      const error = new Error("Category with this name and type already exists.");
+      error.statusCode = 409;
+      throw error;
+    }
+    throw err;
+  }
+};
+
+const getCategories = async (userId) => {
+  const categories = await Category.find({ userId }).sort({ name: 1 });
+  return categories.map(formatCategory);
+};
+
+const getCategoryById = async (id, userId) => {
+  const category = await Category.findOne({ _id: id, userId });
+  if (!category) {
+    const error = new Error("Category not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return formatCategory(category);
+};
+
 const getDefaultCategories = async () => {
   return defaultCategories;
 };
 
-// Suggest category based on merchant
 const suggestCategory = async (merchant) => {
+  if (!merchant) return "Others";
   const name = merchant.toLowerCase();
 
-  if (name.includes("swiggy") || name.includes("zomato")) {
+  if (name.includes("swiggy") || name.includes("zomato") || name.includes("food") || name.includes("restaurant")) {
     return "Food";
   }
-
-  if (name.includes("uber") || name.includes("ola")) {
+  if (name.includes("uber") || name.includes("ola") || name.includes("travel")) {
     return "Travel";
   }
-
-  if (name.includes("salary")) {
+  if (name.includes("salary") || name.includes("paycheck")) {
     return "Income";
   }
-
-  if (name.includes("amazon") || name.includes("flipkart")) {
+  if (name.includes("amazon") || name.includes("flipkart") || name.includes("shopping")) {
     return "Shopping";
   }
-
   return "Others";
 };
 
-// Create a new category
-const createCategory = async (userId, data) => {
-  const { name, type, isDefault = false } = data;
-
-  const existingCategory = await Category.findOne({
-    userId,
-    name,
-  });
-
-  if (existingCategory) {
-    throw new Error("Category already exists");
-  }
-
-  const category = await Category.create({
-    userId,
-    name,
-    type,
-    isDefault,
-  });
-
-  return category;
-};
-
-// Update category
-const updateCategory = async (userId, categoryId, data) => {
-  const category = await Category.findOneAndUpdate(
-    {
-      _id: categoryId,
-      userId,
-    },
-    data,
-    {
-      new: true,
-      runValidators: true,
+const updateCategory = async (id, userId, updateData) => {
+  try {
+    const category = await Category.findOneAndUpdate(
+      { _id: id, userId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+    if (!category) {
+      const error = new Error("Category not found.");
+      error.statusCode = 404;
+      throw error;
     }
-  );
-
-  if (!category) {
-    throw new Error("Category not found");
+    return formatCategory(category);
+  } catch (err) {
+    if (err.code === 11000) {
+      const error = new Error("Category with this name and type already exists.");
+      error.statusCode = 409;
+      throw error;
+    }
+    throw err;
   }
-
-  return category;
 };
 
-// Delete category
-const deleteCategory = async (userId, categoryId) => {
-  const category = await Category.findOneAndDelete({
-    _id: categoryId,
-    userId,
-  });
-
+const deleteCategory = async (id, userId) => {
+  const category = await Category.findOneAndDelete({ _id: id, userId });
   if (!category) {
-    throw new Error("Category not found");
+    const error = new Error("Category not found.");
+    error.statusCode = 404;
+    throw error;
   }
-
-  return category;
+  return formatCategory(category);
 };
 
 module.exports = {
+  createCategory,
   getCategories,
+  getCategoryById,
   getDefaultCategories,
   suggestCategory,
-  createCategory,
   updateCategory,
   deleteCategory,
 };

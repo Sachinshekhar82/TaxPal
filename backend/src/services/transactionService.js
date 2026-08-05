@@ -1,36 +1,59 @@
 const Transaction = require("../models/Transaction");
 
-// CREATE
+const formatTransaction = (t) => {
+  return {
+    id: t._id,
+    type: t.type,
+    category: t.category,
+    amount: t.amount,
+    date: t.date,
+    description: t.description,
+    notes: t.notes,
+  };
+};
+
 const createTransaction = async (transactionData) => {
-  const { type, category, amount, date } = transactionData;
-
-  if (!type || !category || !amount || !date) {
-    throw new Error("All required fields must be provided");
-  }
-
-  return await Transaction.create(transactionData);
+  const transaction = await Transaction.create(transactionData);
+  return formatTransaction(transaction);
 };
 
-// GET ALL
 const getAllTransactions = async (userId) => {
-  return await Transaction.find({ userId }).sort({ date: -1 });
+  const transactions = await Transaction.find({ userId }).sort({ date: -1 });
+  return transactions.map(formatTransaction);
 };
 
-// GET ONE
-const getTransactionById = async (id) => {
-  return await Transaction.findById(id);
+const getTransactionById = async (id, userId) => {
+  const transaction = await Transaction.findOne({ _id: id, userId });
+  if (!transaction) {
+    const error = new Error("Transaction not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return formatTransaction(transaction);
 };
 
-// UPDATE
-const updateTransaction = async (id, updateData) => {
-  return await Transaction.findByIdAndUpdate(id, updateData, {
-    new: true,
-  });
+const updateTransaction = async (id, userId, updateData) => {
+  const transaction = await Transaction.findOneAndUpdate(
+    { _id: id, userId },
+    updateData,
+    { new: true }
+  );
+  if (!transaction) {
+    const error = new Error("Transaction not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return formatTransaction(transaction);
 };
 
-// DELETE
-const deleteTransaction = async (id) => {
-  return await Transaction.findByIdAndDelete(id);
+const deleteTransaction = async (id, userId) => {
+  const transaction = await Transaction.findOneAndDelete({ _id: id, userId });
+  if (!transaction) {
+    const error = new Error("Transaction not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return formatTransaction(transaction);
 };
 
 module.exports = {

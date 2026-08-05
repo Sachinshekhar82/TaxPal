@@ -1,77 +1,93 @@
-const bcrypt = require("bcrypt");
-const User = require("../models/User");
-const { generateToken } = require("../utils/jwt");
+const bcrypt = require('bcrypt');
+const User = require('../models/User');
+const { generateToken } = require('../utils/jwt');
 
-// Register User
+const formatUserResponse = (user) => {
+  return {
+    id: user._id,
+    name: user.name,
+    fullName: user.name,
+    username: user.username,
+    email: user.email,
+    country: user.country,
+    incomeBracket: user.income_bracket
+  };
+};
+
 const registerUser = async (userData) => {
-  const { name, username, email, password, country, income_bracket } = userData;
+  const { username, name, fullName, email, password, country, incomeBracket, income_bracket } = userData;
 
-  // Check if email already exists
-  const existingEmail = await User.findOne({ email });
-  if (existingEmail) {
-    throw new Error("Email already exists");
-  }
+  const actualName = fullName || name;
+  const actualIncomeBracket = (incomeBracket || income_bracket || "").toLowerCase();
 
-  // Check if username already exists
-  const existingUsername = await User.findOne({ username });
-  if (existingUsername) {
-    throw new Error("Username already exists");
+  // Check duplicate email or username
+  const userExists = await User.findOne({ $or: [{ email }, { username }] });
+  if (userExists) {
+    const error = new Error('User with this email or username already exists.');
+    error.statusCode = 409;
+    throw error;
   }
 
   // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Create user
+  // Create new user
   const user = await User.create({
-    name,
+    name: actualName,
     username,
     email,
     password: hashedPassword,
     country,
-    income_bracket,
+    income_bracket: actualIncomeBracket,
   });
 
+  // Generate token
   const token = generateToken(user._id);
 
   return {
-    user,
+    user: formatUserResponse(user),
     token,
   };
 };
 
-// Login User
 const loginUser = async (identifier, password) => {
+  // Find user by email OR username
   const user = await User.findOne({
-    $or: [{ email: identifier }, { username: identifier }],
+    $or: [{ email: identifier }, { username: identifier }]
   });
-
+  
   if (!user) {
-    throw new Error("Invalid credentials");
+    const error = new Error('Invalid email, username, or password.');
+    error.statusCode = 401;
+    throw error;
   }
 
+  // Compare password
   const isMatch = await bcrypt.compare(password, user.password);
-
   if (!isMatch) {
-    throw new Error("Invalid credentials");
+    const error = new Error('Invalid email, username, or password.');
+    error.statusCode = 401;
+    throw error;
   }
 
+  // Generate token
   const token = generateToken(user._id);
 
   return {
-    user,
+    user: formatUserResponse(user),
     token,
   };
 };
 
-// Get Current User
 const getCurrentUser = async (userId) => {
-  const user = await User.findById(userId).select("-password");
-
+  const user = await User.findById(userId).select('-password');
   if (!user) {
-    throw new Error("User not found");
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
   }
-
-  return user;
+  return formatUserResponse(user);
 };
 
 module.exports = {

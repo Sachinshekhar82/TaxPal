@@ -1,74 +1,105 @@
 const budgetService = require("../services/budgetService");
 
-// Create Budget
-const createBudget = async (req, res) => {
+const createBudget = async (req, res, next) => {
   try {
-    const budget = await budgetService.createBudget(req.body);
-    res.status(201).json(budget);
+    const budgetData = {
+      category: req.body.category,
+      limit: req.body.limit,
+      month: req.body.month,
+      userId: req.user.id,
+    };
+    const budget = await budgetService.createBudget(budgetData);
+    res.status(201).json({
+      success: true,
+      message: "Budget created successfully.",
+      data: budget
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-// Get All Budgets
-const getAllBudgets = async (req, res) => {
+const getBudgets = async (req, res, next) => {
   try {
-    const budgets = await budgetService.getAllBudgets();
-    res.status(200).json(budgets);
+    const budgets = await budgetService.getBudgets(req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Budgets retrieved successfully.",
+      data: budgets
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
-// Get Budget by ID
-const getBudgetById = async (req, res) => {
+const getBudgetById = async (req, res, next) => {
   try {
-    const budget = await budgetService.getBudgetById(req.params.id);
+    const budget = await budgetService.getBudgetById(req.params.id, req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Budget retrieved successfully.",
+      data: budget
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    if (!budget) {
-      return res.status(404).json({ message: "Budget not found" });
+const updateBudget = async (req, res, next) => {
+  try {
+    const updateData = {};
+    if (req.body.category !== undefined) updateData.category = req.body.category;
+    if (req.body.limit !== undefined) updateData.limit = req.body.limit;
+    if (req.body.month !== undefined) updateData.month = req.body.month;
+
+    const budget = await budgetService.updateBudget(req.params.id, req.user.id, updateData);
+    res.status(200).json({
+      success: true,
+      message: "Budget updated successfully.",
+      data: budget
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteBudget = async (req, res, next) => {
+  try {
+    await budgetService.deleteBudget(req.params.id, req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Budget deleted successfully.",
+      data: null
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getBudgetProgress = async (req, res, next) => {
+  try {
+    const month = req.query.month; // e.g., "2026-07"
+    if (!month) {
+      const error = new Error("Month is required");
+      error.statusCode = 400;
+      throw error;
     }
-
-    res.status(200).json(budget);
+    const progress = await budgetService.getBudgetProgressFormatted(req.user.id, month);
+    res.status(200).json({
+      success: true,
+      message: "Budget progress retrieved successfully.",
+      data: progress
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Update Budget
-const updateBudget = async (req, res) => {
-  try {
-    const budget = await budgetService.updateBudget(req.params.id, req.body);
-
-    if (!budget) {
-      return res.status(404).json({ message: "Budget not found" });
-    }
-
-    res.status(200).json(budget);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Delete Budget
-const deleteBudget = async (req, res) => {
-  try {
-    const budget = await budgetService.deleteBudget(req.params.id);
-
-    if (!budget) {
-      return res.status(404).json({ message: "Budget not found" });
-    }
-
-    res.status(200).json({ message: "Budget deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 module.exports = {
   createBudget,
-  getAllBudgets,
+  getBudgets,
   getBudgetById,
   updateBudget,
   deleteBudget,
+  getBudgetProgress,
 };

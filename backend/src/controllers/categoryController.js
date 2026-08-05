@@ -1,108 +1,120 @@
 const categoryService = require("../services/categoryService");
 
-// Get all categories
-const getCategories = async (req, res) => {
+const createCategory = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-
-    const categories = await categoryService.getCategories(userId);
-
-    res.status(200).json(categories);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    const categoryData = {
+      name: req.body.name,
+      type: req.body.type,
+      color: req.body.color,
+      userId: req.user.id,
+    };
+    const category = await categoryService.createCategory(categoryData);
+    res.status(201).json({
+      success: true,
+      message: "Category created successfully.",
+      data: category
     });
+  } catch (error) {
+    next(error);
   }
 };
 
-// Get default categories
-const getDefaultCategories = async (req, res) => {
+const getCategories = async (req, res, next) => {
+  try {
+    const categories = await categoryService.getCategories(req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Categories retrieved successfully.",
+      data: categories
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getCategoryById = async (req, res, next) => {
+  try {
+    const category = await categoryService.getCategoryById(req.params.id, req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Category retrieved successfully.",
+      data: category
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getDefaultCategories = async (req, res, next) => {
   try {
     const categories = await categoryService.getDefaultCategories();
-
-    res.status(200).json(categories);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
+    res.status(200).json({
+      success: true,
+      message: "Default categories retrieved successfully.",
+      data: categories
     });
+  } catch (error) {
+    next(error);
   }
 };
 
-// Suggest category
-const suggestCategory = async (req, res) => {
+const suggestCategory = async (req, res, next) => {
   try {
     const { merchant } = req.body;
-
     const category = await categoryService.suggestCategory(merchant);
-
     res.status(200).json({
-      category,
+      success: true,
+      data: { category }
     });
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    next(error);
   }
 };
 
-// Create category
-const createCategory = async (req, res) => {
+const updateCategory = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const updateData = {};
+    if (req.body.name !== undefined) updateData.name = req.body.name;
+    if (req.body.type !== undefined) updateData.type = req.body.type;
+    if (req.body.color !== undefined) updateData.color = req.body.color;
 
-    const category = await categoryService.createCategory(userId, req.body);
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No fields provided for update."
+      });
+    }
 
-    res.status(201).json(category);
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
-
-// Update category
-const updateCategory = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const categoryId = req.params.id;
-
-    const category = await categoryService.updateCategory(
-      userId,
-      categoryId,
-      req.body
-    );
-
-    res.status(200).json(category);
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
-
-// Delete category
-const deleteCategory = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const categoryId = req.params.id;
-
-    await categoryService.deleteCategory(userId, categoryId);
-
+    const category = await categoryService.updateCategory(req.params.id, req.user.id, updateData);
     res.status(200).json({
-      message: "Category deleted successfully",
+      success: true,
+      message: "Category updated successfully.",
+      data: category
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message,
+    next(error);
+  }
+};
+
+const deleteCategory = async (req, res, next) => {
+  try {
+    const category = await categoryService.deleteCategory(req.params.id, req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Category deleted successfully.",
+      data: category
     });
+  } catch (error) {
+    next(error);
   }
 };
 
 module.exports = {
+  createCategory,
   getCategories,
+  getCategoryById,
   getDefaultCategories,
   suggestCategory,
-  createCategory,
   updateCategory,
   deleteCategory,
 };
