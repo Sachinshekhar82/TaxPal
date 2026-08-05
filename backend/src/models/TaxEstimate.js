@@ -9,7 +9,7 @@ const taxEstimateSchema = new mongoose.Schema(
     },
     country: {
       type: String,
-      required: true,
+      default: "IN",
     },
     state: {
       type: String,
@@ -17,8 +17,7 @@ const taxEstimateSchema = new mongoose.Schema(
     },
     filingStatus: {
       type: String,
-      enum: ["Single", "Married", "Married Separately", "Head of Household"],
-      required: true,
+      default: "Single",
     },
     quarter: {
       type: String,
@@ -27,34 +26,47 @@ const taxEstimateSchema = new mongoose.Schema(
     },
     year: {
       type: Number,
-      required: true,
+      default: new Date().getFullYear(),
     },
-
-    // Quarterly inputs (as entered in the form — NOT annual)
     grossIncomeForQuarter: {
       type: Number,
-      required: true,
-      min: [0, "Income cannot be negative"],
+      default: 0,
+    },
+    grossIncome: {
+      type: Number,
+      default: 0,
+    },
+    deductions: {
+      type: Number,
+      default: 0,
     },
     businessExpenses: { type: Number, default: 0 },
     retirementContribution: { type: Number, default: 0 },
     healthInsurancePremiums: { type: Number, default: 0 },
     homeOfficeDeduction: { type: Number, default: 0 },
-
-    // Calculated summary (quarterly figures)
-    totalDeductions: { type: Number, required: true },
-    taxableIncome: { type: Number, required: true },
-    nationalTax: { type: Number, required: true },
-    stateTax: { type: Number, required: true },
-    estimatedTax: { type: Number, required: true }, // nationalTax + stateTax
-    effectiveTaxRate: { type: Number, required: true }, // percentage
-
+    totalDeductions: { type: Number, default: 0 },
+    taxableIncome: { type: Number, default: 0 },
+    nationalTax: { type: Number, default: 0 },
+    stateTax: { type: Number, default: 0 },
+    estimatedTax: { type: Number, default: 0 },
+    effectiveTaxRate: { type: Number, default: 0 },
     dueDate: {
       type: Date,
-      required: true,
+      default: Date.now,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Completed"],
+      default: "Pending",
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  }
 );
 
 taxEstimateSchema.index({ userId: 1, quarter: 1, year: 1 });
