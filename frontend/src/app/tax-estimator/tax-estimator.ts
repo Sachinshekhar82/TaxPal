@@ -38,6 +38,7 @@ export interface CalendarAlert {
   daysRemaining?: number;
   status?: string;
   dueDateForCalculation: string | Date;
+  isReminderHidden?: boolean;
 }
 
 export interface AlertGroup {
@@ -60,6 +61,7 @@ export class TaxEstimator implements OnInit {
   history: TaxEstimateResult[] = [];
   alertGroups: AlertGroup[] = [];
   reminders: TaxCalendarReminder[] = [];
+  explicitShowReminders: { [key: string]: boolean } = {};
 
   // Calculation Results
   isCalculated = false;
@@ -699,23 +701,33 @@ export class TaxEstimator implements OnInit {
       const daysRemaining = this.calculateDaysRemaining(dueDateObj);
       const status = this.getReminderStatus(daysRemaining);
 
+      const today = new Date();
+      const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const reminderDateDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+      
+      const isReminderReached = todayDateOnly >= reminderDateDateOnly;
+      const forceShowReminder = !!this.explicitShowReminders[item.id];
+      const showReminder = isReminderReached || forceShowReminder;
+
       // 1. Reminder Alert
-      list.push({
-        id: reminderId,
-        estimateId: item.id,
-        type: 'reminder',
-        title: `Reminder: ${item.quarter} Estimated Tax Payment`,
-        date: reminderDate,
-        dateStr: this.formatShortDate(reminderDate),
-        monthYearStr: this.formatMonthYear(reminderDate),
-        description: `Reminder for upcoming ${item.quarter} estimated tax payment due on ${this.formatDueDate(item.dueDate)}`,
-        isRead,
-        estimatedTax: item.estimatedTax,
-        currencySymbol,
-        daysRemaining,
-        status,
-        dueDateForCalculation: dueDateObj
-      });
+      if (showReminder) {
+        list.push({
+          id: reminderId,
+          estimateId: item.id,
+          type: 'reminder',
+          title: `Reminder: ${item.quarter} Estimated Tax Payment`,
+          date: reminderDate,
+          dateStr: this.formatShortDate(reminderDate),
+          monthYearStr: this.formatMonthYear(reminderDate),
+          description: `Reminder for upcoming ${item.quarter} estimated tax payment due on ${this.formatDueDate(item.dueDate)}`,
+          isRead,
+          estimatedTax: item.estimatedTax,
+          currencySymbol,
+          daysRemaining,
+          status,
+          dueDateForCalculation: dueDateObj
+        });
+      }
 
       // 2. Due Payment Alert
       list.push({
@@ -732,7 +744,8 @@ export class TaxEstimator implements OnInit {
         currencySymbol,
         daysRemaining,
         status,
-        dueDateForCalculation: dueDateObj
+        dueDateForCalculation: dueDateObj,
+        isReminderHidden: !showReminder
       });
     }
 
@@ -792,6 +805,12 @@ export class TaxEstimator implements OnInit {
       },
       error: (err) => console.error('Error undoing payment status:', err)
     });
+  }
+
+  showReminder(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.explicitShowReminders[estimateId] = true;
+    this.generateAlerts();
   }
 
   // User-provided utility functions implemented in Angular frontend

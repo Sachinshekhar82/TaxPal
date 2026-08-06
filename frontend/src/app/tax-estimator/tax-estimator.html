@@ -276,6 +276,9 @@
                 </div>
                 <div class="alert-date-row">
                   <i class="ph ph-calendar-blank"></i> {{ alert.dateStr }}
+                  <span class="days-remaining-label" style="margin-left: 0.5rem; font-weight: 600; color: var(--primary-color);" *ngIf="alert.daysRemaining !== undefined">
+                    ({{ alert.daysRemaining > 0 ? alert.daysRemaining + ' days remaining' : (alert.daysRemaining === 0 ? 'Due today' : 'Overdue by ' + (-alert.daysRemaining) + ' days') }})
+                  </span>
                 </div>
                 <p class="alert-description">{{ alert.description }}</p>
               </div>
@@ -308,6 +311,16 @@
               </div>
 
               <!-- Action Button for Payment Alert -->
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'payment' && alert.isReminderHidden && !alert.isPaymentDone"
+                class="btn-action-read"
+                style="margin-right: 0.5rem;"
+                (click)="showReminder(alert.estimateId, $event)"
+              >
+                <i class="ph ph-eye"></i> Show reminder ({{ alert.daysRemaining }} days remaining)
+              </button>
+
               <button 
                 type="button" 
                 *ngIf="alert.type === 'payment' && !alert.isPaymentDone"
