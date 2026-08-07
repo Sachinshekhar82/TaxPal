@@ -35,7 +35,6 @@ function calculateStateTax(country, state, quarterlyTaxableIncome) {
   return Math.round((annualStateTax / 4) * 100) / 100;
 }
 
-// Quarterly taxable income = quarterly gross income - quarterly total deductions
 function getQuarterlyTaxableIncome(quarterlyGrossIncome, deductions) {
   const totalDeductions =
     (deductions.businessExpenses || 0) +

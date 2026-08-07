@@ -214,4 +214,140 @@
       </div>
     </div>
   </div>
+
+  <!-- Tax Calendar Section -->
+  <div class="card tax-calendar-card" style="margin-top: 2rem;">
+    <div class="card-header">
+      <h2 class="card-title"><i class="ph ph-calendar-bold"></i> Tax Calendar</h2>
+      <p class="card-subtitle">Quarterly tax payment deadlines & reminders</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="placeholder-state" *ngIf="alertGroups.length === 0" style="padding: 4rem 2rem; min-height: 250px;">
+      <i class="ph ph-calendar-blank placeholder-icon" style="font-size: 2.5rem; margin-bottom: 0.75rem;"></i>
+      <p class="placeholder-text" style="max-width: 320px;">No tax alerts scheduled yet. Save a quarterly tax estimate calculation to generate automated reminders.</p>
+    </div>
+
+    <!-- Calendar Alerts List -->
+    <div class="calendar-timeline" *ngIf="alertGroups.length > 0">
+      <div class="timeline-month-group" *ngFor="let group of alertGroups">
+        <h3 class="timeline-month-title">{{ group.monthYear }}</h3>
+        
+        <div class="timeline-alerts-list">
+          <div 
+            class="calendar-alert-card" 
+            *ngFor="let alert of group.alerts"
+            [ngClass]="{ 
+              'alert-reminder': alert.type === 'reminder', 
+              'alert-payment': alert.type === 'payment',
+              'alert-read': alert.isRead,
+              'alert-paid': alert.isPaymentDone
+            }"
+          >
+            <div class="alert-card-left">
+              <span 
+                class="alert-type-badge" 
+                [ngClass]="{ 
+                  'badge-reminder': alert.type === 'reminder' && !alert.isRead,
+                  'badge-payment': alert.type === 'payment' && !alert.isPaymentDone,
+                  'badge-read': alert.isRead,
+                  'badge-paid': alert.isPaymentDone
+                }"
+              >
+                <ng-container *ngIf="alert.type === 'reminder' && !alert.isRead">reminder</ng-container>
+                <ng-container *ngIf="alert.type === 'payment' && !alert.isPaymentDone">payment</ng-container>
+                <ng-container *ngIf="alert.isRead">read</ng-container>
+                <ng-container *ngIf="alert.isPaymentDone">paid</ng-container>
+              </span>
+              
+              <div class="alert-details">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <h4 class="alert-title">{{ alert.title }}</h4>
+                  <span 
+                    class="status-pill" 
+                    [ngClass]="{ 
+                      'status-overdue': alert.status === 'Overdue',
+                      'status-duesoon': alert.status === 'Due Soon',
+                      'status-upcoming': alert.status === 'Upcoming'
+                    }"
+                  >
+                    {{ alert.status }}
+                  </span>
+                </div>
+                <div class="alert-date-row">
+                  <i class="ph ph-calendar-blank"></i> {{ alert.dateStr }}
+                  <span class="days-remaining-label" style="margin-left: 0.5rem; font-weight: 600; color: var(--primary-color);" *ngIf="alert.daysRemaining !== undefined">
+                    ({{ alert.daysRemaining > 0 ? alert.daysRemaining + ' days remaining' : (alert.daysRemaining === 0 ? 'Due today' : 'Overdue by ' + (-alert.daysRemaining) + ' days') }})
+                  </span>
+                </div>
+                <p class="alert-description">{{ alert.description }}</p>
+              </div>
+            </div>
+            
+            <div class="alert-card-actions">
+              <!-- Action Button for Reminder -->
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'reminder' && !alert.isRead"
+                class="btn-action-read"
+                (click)="markAsRead(alert.estimateId, $event)"
+              >
+                <i class="ph ph-check"></i> Mark as read
+              </button>
+              
+              <!-- Checkmark for Read Reminder with Undo -->
+              <div *ngIf="alert.type === 'reminder' && alert.isRead" class="status-indicator-read-container">
+                <span class="status-indicator-read">
+                  <i class="ph ph-checks"></i> Read
+                </span>
+                <button 
+                  type="button" 
+                  class="btn-undo"
+                  (click)="markAsUnread(alert.estimateId, $event)"
+                  title="Mark as unread"
+                >
+                  <i class="ph ph-arrow-u-up-left"></i> Undo
+                </button>
+              </div>
+
+              <!-- Action Button for Payment Alert -->
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'payment' && alert.isReminderHidden && !alert.isPaymentDone"
+                class="btn-action-read"
+                style="margin-right: 0.5rem;"
+                (click)="showReminder(alert.estimateId, $event)"
+              >
+                <i class="ph ph-eye"></i> Show reminder ({{ alert.daysRemaining }} days remaining)
+              </button>
+
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'payment' && !alert.isPaymentDone"
+                class="btn-action-paid"
+                (click)="markAsPaid(alert.estimateId, $event)"
+              >
+                <i class="ph ph-coins"></i> Mark as payment done
+              </button>
+              
+              <!-- Checkmark for Paid Alert with Undo -->
+              <div *ngIf="alert.type === 'payment' && alert.isPaymentDone" class="status-indicator-paid-container">
+                <span class="status-indicator-paid">
+                  <i class="ph ph-check-circle"></i> Paid
+                </span>
+                <button 
+                  type="button" 
+                  class="btn-undo btn-undo-paid"
+                  (click)="markAsUnpaid(alert.estimateId, $event)"
+                  title="Mark as unpaid"
+                >
+                  <i class="ph ph-arrow-u-up-left"></i> Undo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

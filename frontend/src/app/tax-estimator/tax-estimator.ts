@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../core/services/auth';
 import { TaxEstimateService, TaxEstimateResult } from '../core/services/tax-estimate';
+import { TaxCalendarService, TaxCalendarReminder } from '../core/services/tax-calendar.service';
 
 interface StateOption {
   value: string;
@@ -21,6 +22,30 @@ interface Slab {
   rate: number;
 }
 
+export interface CalendarAlert {
+  id: string;
+  estimateId: string;
+  type: 'reminder' | 'payment';
+  title: string;
+  date: Date;
+  dateStr: string;
+  monthYearStr: string;
+  description: string;
+  isRead?: boolean;
+  isPaymentDone?: boolean;
+  estimatedTax?: number;
+  currencySymbol?: string;
+  daysRemaining?: number;
+  status?: string;
+  dueDateForCalculation: string | Date;
+  isReminderHidden?: boolean;
+}
+
+export interface AlertGroup {
+  monthYear: string;
+  alerts: CalendarAlert[];
+}
+
 @Component({
   selector: 'app-tax-estimator',
   standalone: true,
@@ -34,6 +59,9 @@ export class TaxEstimator implements OnInit {
   availableStates: StateOption[] = [];
   hasStates = true;
   history: TaxEstimateResult[] = [];
+  alertGroups: AlertGroup[] = [];
+  reminders: TaxCalendarReminder[] = [];
+  explicitShowReminders: { [key: string]: boolean } = {};
 
   // Calculation Results
   isCalculated = false;
@@ -363,6 +391,7 @@ export class TaxEstimator implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private taxEstimateService: TaxEstimateService,
+    private taxCalendarService: TaxCalendarService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -373,6 +402,7 @@ export class TaxEstimator implements OnInit {
 
     this.initForm(defaultCountry);
     this.loadHistory();
+    this.loadCalendar();
   }
 
   private initForm(defaultCountry: string): void {
@@ -489,6 +519,7 @@ export class TaxEstimator implements OnInit {
           this.cdr.detectChanges();
           
           this.loadHistory();
+          this.loadCalendar();
         }
       },
       error: (err) => {
@@ -556,6 +587,19 @@ export class TaxEstimator implements OnInit {
     });
   }
 
+  loadCalendar(): void {
+    this.taxCalendarService.getReminders().subscribe({
+      next: (data) => {
+        this.reminders = data;
+        this.generateAlerts();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading calendar reminders:', err);
+      }
+    });
+  }
+
   loadHistoryItem(item: TaxEstimateResult): void {
     this.updateCountryFields(item.country);
 
@@ -592,6 +636,7 @@ export class TaxEstimator implements OnInit {
         next: (success) => {
           if (success) {
             this.loadHistory();
+            this.loadCalendar();
             this.isCalculated = false;
             this.cdr.detectChanges();
           }
@@ -615,4 +660,195 @@ export class TaxEstimator implements OnInit {
   getItemCurrencySymbol(countryCode: string): string {
     return this.countryConfigs[countryCode]?.currencySymbol || '$';
   }
+
+  // Calendar view helper methods
+  getQuarterFullName(quarter: string): string {
+    if (quarter.includes('Q1')) return 'First';
+    if (quarter.includes('Q2')) return 'Second';
+    if (quarter.includes('Q3')) return 'Third';
+    if (quarter.includes('Q4')) return 'Fourth';
+    return quarter;
+  }
+
+  formatShortDate(date: Date): string {
+    const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${monthsShort[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+  }
+
+  formatMonthYear(date: Date): string {
+    const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${monthsFull[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  generateAlerts(): void {
+    const list: CalendarAlert[] = [];
+
+    for (const item of this.reminders) {
+      if (!item.id) continue;
+      const dueDateObj = item.dueDate ? new Date(item.dueDate) : null;
+      if (!dueDateObj || isNaN(dueDateObj.getTime())) continue;
+
+      // Calculate reminder date: 14 days before due date
+      const reminderDate = new Date(dueDateObj.getTime() - 14 * 24 * 60 * 60 * 1000);
+      const reminderId = `${item.id}_reminder`;
+      const paymentId = `${item.id}_payment`;
+
+      const isRead = item.isRead;
+      const isPaymentDone = item.paymentStatus === 'Completed';
+      const currencySymbol = this.getItemCurrencySymbol(item.country);
+
+      // Dynamic calculation using the new utility functions
+      const daysRemaining = this.calculateDaysRemaining(dueDateObj);
+      const status = this.getReminderStatus(daysRemaining);
+
+      const today = new Date();
+      const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const reminderDateDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+      
+      const isReminderReached = todayDateOnly >= reminderDateDateOnly;
+      const forceShowReminder = !!this.explicitShowReminders[item.id];
+      const showReminder = isReminderReached || forceShowReminder;
+
+      // 1. Reminder Alert
+      if (showReminder) {
+        list.push({
+          id: reminderId,
+          estimateId: item.id,
+          type: 'reminder',
+          title: `Reminder: ${item.quarter} Estimated Tax Payment`,
+          date: reminderDate,
+          dateStr: this.formatShortDate(reminderDate),
+          monthYearStr: this.formatMonthYear(reminderDate),
+          description: `Reminder for upcoming ${item.quarter} estimated tax payment due on ${this.formatDueDate(item.dueDate)}`,
+          isRead,
+          estimatedTax: item.estimatedTax,
+          currencySymbol,
+          daysRemaining,
+          status,
+          dueDateForCalculation: dueDateObj
+        });
+      }
+
+      // 2. Due Payment Alert
+      list.push({
+        id: paymentId,
+        estimateId: item.id,
+        type: 'payment',
+        title: `Due: ${item.quarter} Estimated Tax Payment`,
+        date: dueDateObj,
+        dateStr: this.formatShortDate(dueDateObj),
+        monthYearStr: this.formatMonthYear(dueDateObj),
+        description: `${this.getQuarterFullName(item.quarter)} quarter estimated tax payment due: ${currencySymbol}${item.estimatedTax}`,
+        isPaymentDone,
+        estimatedTax: item.estimatedTax,
+        currencySymbol,
+        daysRemaining,
+        status,
+        dueDateForCalculation: dueDateObj,
+        isReminderHidden: !showReminder
+      });
+    }
+
+    // Sort reminders by due date
+    this.sortByDueDate(list);
+
+    // Group by monthYearStr
+    const groupsMap = new Map<string, CalendarAlert[]>();
+    for (const alert of list) {
+      if (!groupsMap.has(alert.monthYearStr)) {
+        groupsMap.set(alert.monthYearStr, []);
+      }
+      groupsMap.get(alert.monthYearStr)!.push(alert);
+    }
+
+    this.alertGroups = Array.from(groupsMap.entries()).map(([monthYear, alerts]) => ({
+      monthYear,
+      alerts
+    }));
+  }
+
+  markAsRead(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.taxCalendarService.markReminderRead(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error marking reminder as read:', err)
+    });
+  }
+
+  markAsPaid(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.taxCalendarService.markPaymentDone(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error marking payment as completed:', err)
+    });
+  }
+
+  markAsUnread(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.taxCalendarService.undoMarkAsRead(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error undoing reminder read status:', err)
+    });
+  }
+
+  markAsUnpaid(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.taxCalendarService.undoPaymentDone(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error undoing payment status:', err)
+    });
+  }
+
+  showReminder(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.explicitShowReminders[estimateId] = true;
+    this.generateAlerts();
+  }
+
+  // User-provided utility functions implemented in Angular frontend
+  getCurrentQuarter(date: Date = new Date()): string {
+    const month = date.getMonth() + 1;
+
+    if (month <= 3) return "Q1";
+    if (month <= 6) return "Q2";
+    if (month <= 9) return "Q3";
+    return "Q4";
+  }
+
+  getQuarterFromDate(date: string | Date): string {
+    const month = new Date(date).getMonth() + 1;
+
+    if (month <= 3) return "Q1";
+    if (month <= 6) return "Q2";
+    if (month <= 9) return "Q3";
+    return "Q4";
+  }
+
+  calculateDaysRemaining(dueDate: string | Date): number {
+    const today = new Date();
+    return Math.ceil(
+      (new Date(dueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
+
+  getReminderStatus(daysRemaining: number): string {
+    if (daysRemaining < 0) return "Overdue";
+    if (daysRemaining <= 7) return "Due Soon";
+    return "Upcoming";
+  }
+
+  sortByDueDate(reminders: CalendarAlert[]): CalendarAlert[] {
+    return reminders.sort(
+      (a, b) => new Date(a.dueDateForCalculation).getTime() - new Date(b.dueDateForCalculation).getTime()
+    );
+  }
 }
+
