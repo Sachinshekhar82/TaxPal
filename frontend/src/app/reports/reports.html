@@ -72,7 +72,8 @@
         <tbody>
           <tr *ngFor="let report of reports" 
               [class.active-row-simple]="selectedReport?.id === report.id"
-              class="clickable-row-simple">
+              class="clickable-row-simple"
+              (click)="onPreview(report)">
             <td>
               <div class="report-title-cell">
                 <i class="ph" [ngClass]="{
@@ -113,6 +114,302 @@
         </tbody>
       </table>
     </div>
+  </div>
+
+  <!-- 3. Report Preview Card (Stacked Below) -->
+  <div class="card preview-card-full">
+    
+    <!-- Default Empty State -->
+    <div *ngIf="!selectedReport" class="preview-empty-state">
+      <div class="empty-icon-wrapper">
+        <i class="ph ph-file-text"></i>
+      </div>
+      <h3>Select a report to preview</h3>
+      <p>Generated reports will appear here for review before downloading.</p>
+    </div>
+
+    <!-- Active Report Preview State -->
+    <div *ngIf="selectedReport" class="preview-active-state">
+      <!-- Preview Actions Header -->
+      <div class="preview-actions-header">
+        <div class="preview-report-title">
+          <i class="ph" [ngClass]="{
+            'ph-file-text': selectedReport.type === 'income_statement',
+            'ph-receipt': selectedReport.type === 'tax_summary',
+            'ph-wallet': selectedReport.type === 'budget_performance'
+          }"></i>
+          <h4>{{ selectedReport.name }}</h4>
+        </div>
+        <div class="preview-actions-buttons">
+          <button type="button" class="btn-preview-action btn-print" (click)="onPrint()" title="Print">
+            <i class="ph ph-printer"></i>
+            <span>Print</span>
+          </button>
+          <button type="button" class="btn-preview-action btn-download" (click)="onDownload(selectedReport)" title="Download">
+            <i class="ph ph-download-simple"></i>
+            <span>Download</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Report Document Sheet -->
+      <div class="report-sheet-wrapper">
+        <div class="report-sheet">
+          
+          <!-- Sheet Header -->
+          <div class="sheet-header">
+            <div class="sheet-header-left">
+              <span class="sheet-company-logo">
+                <i class="ph ph-activity logo-icon"></i>Tax<span class="highlight">Pal</span>
+              </span>
+              <h1 class="sheet-report-title">{{ selectedReport.data?.header?.title }}</h1>
+              <p class="sheet-meta-period">Period: <span class="val">{{ selectedReport.data?.header?.periodLabel }}</span></p>
+            </div>
+            <div class="sheet-header-right">
+              <p class="sheet-meta-item"><span class="label">User:</span> <span class="val">{{ selectedReport.data?.header?.userName }}</span></p>
+              <p class="sheet-meta-item"><span class="label">Email:</span> <span class="val">{{ selectedReport.data?.header?.userEmail }}</span></p>
+              <p class="sheet-meta-item"><span class="label">Generated:</span> <span class="val">{{ selectedReport.data?.header?.generatedDate }}</span></p>
+            </div>
+          </div>
+
+          <!-- Report Body -->
+          <div class="sheet-body">
+            
+            <!-- 1. Income Statement Report Layout -->
+            <div *ngIf="selectedReport.type === 'income_statement'" class="report-content-type">
+              
+              <!-- Summary Metrics -->
+              <div class="sheet-metrics-row">
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Total Income</span>
+                  <span class="metric-value text-green">{{ formatCurrency(selectedReport.data?.metrics?.totalIncome, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Total Expenses</span>
+                  <span class="metric-value text-red">{{ formatCurrency(selectedReport.data?.metrics?.totalExpenses, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Net Income</span>
+                  <span class="metric-value" [ngClass]="selectedReport.data?.metrics?.netIncome >= 0 ? 'text-green' : 'text-red'">
+                    {{ formatCurrency(selectedReport.data?.metrics?.netIncome, selectedReport) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Breakdown Grids -->
+              <div class="sheet-grids-section">
+                <div class="sheet-grid-wrapper">
+                  <h3 class="sheet-section-title">Income Breakdown</h3>
+                  <table class="sheet-data-table">
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th class="text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of selectedReport.data?.incomeBreakdown">
+                        <td>{{ row.category }}</td>
+                        <td class="text-right font-medium">{{ formatCurrency(row.amount, selectedReport) }}</td>
+                      </tr>
+                      <tr *ngIf="!selectedReport.data?.incomeBreakdown?.length">
+                        <td colspan="2" class="empty-data-row">No income transactions</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="sheet-grid-wrapper">
+                  <h3 class="sheet-section-title">Expense Breakdown</h3>
+                  <table class="sheet-data-table">
+                    <thead>
+                      <tr>
+                        <th>Category</th>
+                        <th class="text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of selectedReport.data?.expenseBreakdown">
+                        <td>{{ row.category }}</td>
+                        <td class="text-right font-medium">{{ formatCurrency(row.amount, selectedReport) }}</td>
+                      </tr>
+                      <tr *ngIf="!selectedReport.data?.expenseBreakdown?.length">
+                        <td colspan="2" class="empty-data-row">No expense transactions</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- 2. Tax Summary Report Layout -->
+            <div *ngIf="selectedReport.type === 'tax_summary'" class="report-content-type">
+              
+              <!-- Summary Metrics -->
+              <div class="sheet-metrics-row-4">
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Gross Income</span>
+                  <span class="metric-value">{{ formatCurrency(selectedReport.data?.metrics?.grossIncome, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Total Deductions</span>
+                  <span class="metric-value">{{ formatCurrency(selectedReport.data?.metrics?.totalDeductions, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Taxable Income</span>
+                  <span class="metric-value">{{ formatCurrency(selectedReport.data?.metrics?.taxableIncome, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card highlight-tax">
+                  <span class="metric-label">Estimated Tax</span>
+                  <span class="metric-value text-indigo">{{ formatCurrency(selectedReport.data?.metrics?.estimatedTax, selectedReport) }}</span>
+                </div>
+              </div>
+
+              <!-- Deductions Breakdown -->
+              <div class="sheet-section-wrapper">
+                <h3 class="sheet-section-title">Deductions Breakdown Detail</h3>
+                <div class="deductions-list">
+                  <div class="deductions-row">
+                    <span class="label">Business Expenses</span>
+                    <span class="val font-medium">{{ formatCurrency(selectedReport.data?.deductionsBreakdown?.businessExpenses, selectedReport) }}</span>
+                  </div>
+                  <div class="deductions-row">
+                    <span class="label">Retirement Contributions</span>
+                    <span class="val font-medium">{{ formatCurrency(selectedReport.data?.deductionsBreakdown?.retirement, selectedReport) }}</span>
+                  </div>
+                  <div class="deductions-row">
+                    <span class="label">Health Insurance Premiums</span>
+                    <span class="val font-medium">{{ formatCurrency(selectedReport.data?.deductionsBreakdown?.healthInsurance, selectedReport) }}</span>
+                  </div>
+                  <div class="deductions-row">
+                    <span class="label">Home Office Deduction</span>
+                    <span class="val font-medium">{{ formatCurrency(selectedReport.data?.deductionsBreakdown?.homeOffice, selectedReport) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tax Calculations & Projections -->
+              <div class="sheet-section-wrapper">
+                <h3 class="sheet-section-title">Tax Calculations & Projections</h3>
+                <table class="sheet-data-table">
+                  <thead>
+                    <tr>
+                      <th>Tax Type / Metric</th>
+                      <th class="text-right">Rate / Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>National Tax Estimation</td>
+                      <td class="text-right font-medium">{{ formatCurrency(selectedReport.data?.taxCalculations?.nationalTax, selectedReport) }}</td>
+                    </tr>
+                    <tr>
+                      <td>State Tax Estimation</td>
+                      <td class="text-right font-medium">{{ formatCurrency(selectedReport.data?.taxCalculations?.stateTax, selectedReport) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Effective Tax Rate</td>
+                      <td class="text-right font-medium">{{ selectedReport.data?.taxCalculations?.effectiveTaxRate | number:'1.2-2' }}%</td>
+                    </tr>
+                    <tr>
+                      <td>Target Payment Due Date</td>
+                      <td class="text-right font-medium text-warning">{{ selectedReport.data?.taxCalculations?.dueDate }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+            <!-- 3. Budget Performance Report Layout -->
+            <div *ngIf="selectedReport.type === 'budget_performance'" class="report-content-type">
+              
+              <!-- Summary Metrics -->
+              <div class="sheet-metrics-row">
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Total Limit</span>
+                  <span class="metric-value">{{ formatCurrency(selectedReport.data?.metrics?.totalLimit, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Total Actual Spent</span>
+                  <span class="metric-value">{{ formatCurrency(selectedReport.data?.metrics?.totalActualSpent, selectedReport) }}</span>
+                </div>
+                <div class="sheet-metric-card">
+                  <span class="metric-label">Remaining Balance</span>
+                  <span class="metric-value" [ngClass]="selectedReport.data?.metrics?.remainingBalance >= 0 ? 'text-green' : 'text-red'">
+                    {{ formatCurrency(selectedReport.data?.metrics?.remainingBalance, selectedReport) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Over Budget Indicator Banner -->
+              <div class="budget-indicator-banner" [ngClass]="selectedReport.data?.metrics?.overBudget ? 'banner-alert' : 'banner-success'">
+                <div class="banner-icon">
+                  <i class="ph" [ngClass]="selectedReport.data?.metrics?.overBudget ? 'ph-warning' : 'ph-check-circle'"></i>
+                </div>
+                <div class="banner-text">
+                  <span class="banner-title">{{ selectedReport.data?.metrics?.overBudget ? 'Limit Exceeded' : 'Within Budget Limits' }}</span>
+                  <span class="banner-desc">
+                    {{ selectedReport.data?.metrics?.overBudget 
+                      ? 'Your overall actual expenses have exceeded the total allocated budget.' 
+                      : 'Your overall actual expenses are within the total allocated budget limits.' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Category Performance Grid -->
+              <div class="sheet-section-wrapper">
+                <h3 class="sheet-section-title">Category Performance Grid</h3>
+                <table class="sheet-data-table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th class="text-right">Budget Limit</th>
+                      <th class="text-right">Actual Spent</th>
+                      <th class="text-right">Variance</th>
+                      <th style="width: 140px; text-align: center;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of selectedReport.data?.categoryPerformance">
+                      <td>{{ row.categoryName }}</td>
+                      <td class="text-right font-medium">{{ formatCurrency(row.budgetLimit, selectedReport) }}</td>
+                      <td class="text-right font-medium">{{ formatCurrency(row.actualSpent, selectedReport) }}</td>
+                      <td class="text-right font-medium" [ngClass]="row.variance >= 0 ? 'text-green' : 'text-red'">
+                        {{ formatCurrency(row.variance, selectedReport) }}
+                      </td>
+                      <td>
+                        <div class="status-badge-wrapper">
+                          <span class="status-badge" [ngClass]="row.status === 'On Track' ? 'status-on-track' : 'status-exceeded'">
+                            <span class="dot"></span>
+                            {{ row.status }}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="!selectedReport.data?.categoryPerformance?.length">
+                      <td colspan="5" class="empty-data-row">No category performance details</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Sheet Footer -->
+          <div class="sheet-footer">
+            <p>Generated by TaxPal. Private & Confidential. For review only.</p>
+            <p>&copy; 2026 TaxPal Technologies, Inc.</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
   </div>
 
 </div>

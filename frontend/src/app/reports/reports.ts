@@ -114,4 +114,18 @@ export class ReportsComponent implements OnInit {
   onPrint(): void {
     window.print();
   }
+
+  getReportCurrencySymbol(report: GeneratedReport): string {
+    if (!report) return this.currencySymbol;
+    if (report.type === 'tax_summary') {
+      return report.data?.currencySymbol || '$';
+    }
+    return this.currencySymbol;
+  }
+
+  formatCurrency(val: number, report: GeneratedReport): string {
+    const symbol = this.getReportCurrencySymbol(report);
+    return this.reportService.formatCurrency(val, symbol);
+  }
 }
+
