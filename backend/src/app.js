@@ -28,6 +28,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health Check Root Route (for Render / ping services)
+app.get('/', (req, res) => {
+  res.status(200).json({ success: true, message: 'TaxPal API is running live 🚀' });
+});
+
+app.head('/', (req, res) => {
+  res.status(200).end();
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
