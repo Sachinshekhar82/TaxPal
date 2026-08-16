@@ -2,7 +2,28 @@
 
 # TaxPal
 
-TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, manage budgets, categorize expenses, and generate financial insights through an interactive dashboard.
+TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, manage budgets, categorize expenses, generate financial reports, and interact with an AI-powered financial assistant.
+
+---
+
+# 🤖 AI Financial Assistant
+
+TaxPal includes an **AI Financial Assistant** powered by the Google Gemini API (`gemini-2.5-flash`), built cleanly into the existing Angular + Node.js + MongoDB architecture.
+
+### Key Capabilities
+- 💬 **Personalized Financial Intelligence**: Answers questions using only the logged-in user's authenticated transactions, income, expenses, budgets, tax estimates, and reminders.
+- 📄 **Direct Report Downloads**: Triggers report generation directly inside chat messages and renders `[ Download PDF ]` and `[ Download CSV ]` action buttons for instant file downloads.
+- 🧭 **In-App Navigation**: Supports navigation prompts ("Open my budgets", "Take me to tax estimator") with clickable `[ Open Page ]` buttons using Angular Router.
+- 📊 **Visual Data Cards**: Renders interactive UI cards for budget summaries, tax calculation breakdowns, and spending distributions directly within assistant response bubbles.
+- 🔒 **Enterprise-Grade Security & Isolation**: The Gemini API key is kept strictly on the backend (`process.env.GEMINI_API_KEY`). Gemini is never given direct database or query execution access; the Express backend performs all calculations and enforces strict JWT user data scoping (`req.user.id`).
+
+### Backend Environment Configuration
+Add the following to `backend/.env`:
+
+```env
+GEMINI_API_KEY=your_real_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+```
 
 ---
 
@@ -13,10 +34,13 @@ TaxPal is a full-stack web application designed to help freelancers and self-emp
 - TypeScript
 - HTML
 - CSS
+- Phosphor Icons
 
 ## Backend
 - Node.js
 - Express.js
+- `@google/generative-ai` SDK
+- PDFKit & CSV generation engines
 
 ## Database
 - MongoDB Atlas
@@ -30,22 +54,27 @@ TaxPal is a full-stack web application designed to help freelancers and self-emp
 TaxPal-Batch2
 │
 ├── frontend/
+│   ├── src/app/
+│   │   ├── core/services/chat.service.ts
+│   │   ├── layout/chatbot/
+│   │   │   ├── chatbot.ts
+│   │   │   ├── chatbot.html
+│   │   │   └── chatbot.css
+│   │   └── layout/layout/
 │
 ├── backend/
 │   ├── src/
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── routes/
+│   │   ├── controllers/chatController.js
+│   │   ├── models/ChatHistory.js
+│   │   ├── routes/chatRoutes.js
 │   │   ├── services/
-│   │   ├── utils/
-│   │   ├── validators/
+│   │   │   ├── geminiService.js
+│   │   │   ├── chatService.js
+│   │   │   └── chatActionService.js
 │   │   ├── app.js
 │   │   └── server.js
 │   │
 │   ├── package.json
-│   ├── package-lock.json
 │   ├── .gitignore
 │   └── .env.example
 │
@@ -54,157 +83,15 @@ TaxPal-Batch2
 
 ---
 
-# 📌 Milestone 1 Features
+# 📌 Features Summary
 
-- ✅ User Registration
-- ✅ User Login with JWT Authentication
-- ✅ Protected Routes
-- ✅ Income Management
-- ✅ Expense Management
-- ✅ Transaction Management (CRUD)
-- ✅ Financial Dashboard
-- ✅ Recent Transactions
-- ✅ MongoDB Atlas Integration
-- ✅ RESTful Backend APIs
-- ✅ Frontend-Backend Integration
-- ✅ Authentication & Authorization
-- ✅ Responsive User Interface
-
----
-
-# 📌 Milestone 2 Features
-
-- ✅ Budget Management (CRUD)
-- ✅ Budget Progress Tracking
-- ✅ Category Management (CRUD)
-- ✅ Default Categories
-- ✅ Category Suggestion API
-- ✅ Budget Planning
-- ✅ JWT Authentication & Authorization
-- ✅ Request Validation
-- ✅ User Ownership Enforcement
-- ✅ Frontend-Backend Integration
-- ✅ API Testing
-- ✅ End-to-End Testing
-
----
-# 📌 Milestone 3 Features
-
-- ✅ Tax Estimation Module
-- ✅ Country/Region Selection
-- ✅ Tax Calculation Based on Regional Tax Slabs
-- ✅ Quarterly Tax Estimation
-- ✅ Tax Summary
-- ✅ Quarterly Tax Reminder Management
-- ✅ Calendar View for Tax Due Dates
-- ✅ Alert & Reminder Management
-- ✅ Tax Calculation APIs
-- ✅ MongoDB Atlas Integration
-- ✅ Frontend-Backend Integration
-- ✅ API Testing
-- ✅ End-to-End Testing
-
----
-
-# 📊 Current Project Status
-
-## ✅ Milestone 1 Completed
-
-The following modules have been successfully completed and integrated:
-
-- Repository setup
-- Frontend project setup
-- Backend project setup
-- MongoDB Atlas configuration
-- Database models implementation
-- Authentication APIs (Register, Login & Current User)
-- JWT Authentication
-- Protected API routes
-- Transaction APIs (Create, Read, Update & Delete)
-- Dashboard API
-- Frontend UI implementation
-- Frontend and Backend integration
-- API integration testing
-- End-to-end application testing
-- Bug fixes and optimization
-- Project documentation
-- Git workflow implementation
-
----
-
----
-
-## ✅ Milestone 2 Completed
-
-The following modules have been successfully implemented, tested, integrated, and merged into the **main** branch:
-
-- Frontend implementation completed
-- Budget module implementation
-- Budget CRUD APIs
-- Budget Progress API
-- Category module implementation
-- Category CRUD APIs
-- Default Categories API
-- Category Suggestion API
-- Budget Planning functionality
-- JWT Authentication integration
-- Request validation
-- User ownership enforcement
-- MongoDB Atlas integration
-- Frontend-Backend integration
-- Runtime API testing using Postman
-- CRUD testing
-- Authentication & Authorization testing
-- End-to-End application testing
-- Bug fixes and optimization
-- Project documentation updated
-- Git workflow implementation
-
----
-
-## ✅ Milestone 3 Completed
-
-The following modules have been successfully implemented, tested, integrated, and merged into the **main** branch:
-
-- Frontend Tax Estimation module implementation
-- Tax Calculator Interface
-- Country and Region Selection
-- Tax Estimation Engine
-- Tax Slab Calculation Logic
-- Quarterly Tax Calculation
-- Tax Summary implementation
-- Tax Reminder Management
-- Calendar View with Quarterly Tax Reminders
-- Alert Management Module
-- Database models implementation
-- MongoDB Atlas integration
-- Frontend-Backend integration
-- Runtime API testing
-- Authentication & Authorization testing
-- End-to-End application testing
-- Bug fixes and optimization
-- Project documentation updated
-- Git workflow implementation
-
----
-
-# 🎯 Milestone 3 Deliverables
-
-- Tax Calculator Interface
-- Country & Region Selection
-- Tax Estimation Engine
-- Tax Slab-Based Calculation
-- Quarterly Tax Estimation
-- Tax Summary
-- Calendar View with Quarterly Tax Reminders
-- Alert & Reminder Management
-- Angular Frontend
-- RESTful Backend APIs
-- MongoDB Atlas Integration
-- Complete Frontend-Backend Integration
-- API Testing using Postman
-- End-to-End Testing
-- Stable and Functional Application
+- ✅ **User Authentication**: Register, Login, JWT tokens & protected routes.
+- ✅ **Transactions**: Income and expense tracking with category classification.
+- ✅ **Budgets**: Budget creation, limits, spending progress & threshold warnings.
+- ✅ **Tax Estimation**: Quarterly tax calculation engine based on country/regional slabs.
+- ✅ **Tax Calendar & Reminders**: Due date tracking, pending payment status, alert notifications.
+- ✅ **Financial Reports**: Income statement, tax summary, budget performance reports with PDF & CSV downloads.
+- ✅ **AI Financial Assistant**: Floating chatbot with Gemini 2.5 Flash, structured action buttons, visual data cards, and chat history.
 
 ---
 
@@ -213,34 +100,13 @@ The following modules have been successfully implemented, tested, integrated, an
 **Project:** TaxPal – Personal Finance & Tax Estimator
 
 ## Frontend Team
-
 - Sachin Shekhar (Team Lead)
 - Debjani Roy
 - Jalal Jasmine
 
 ## Backend Team
-
 - Varshistha Gopalam
 - Rehan Shaik
 
 ## Database Team
-
 - Jainee Jain
-
----
-
-# ✅ Overall Project Status
-
-**Milestone 1, Milestone 2, and Milestone 3 have been successfully completed.**
-
-- ✅ All planned frontend, backend, and database functionalities have been successfully implemented.
-- ✅ User Authentication, Transaction Management, Dashboard, Budget Management, Category Management, and Tax Estimation modules are fully functional.
-- ✅ Quarterly Tax Reminder and Calendar features have been successfully implemented.
-- ✅ All APIs have been reviewed, tested, and validated.
-- ✅ Frontend and backend have been fully integrated.
-- ✅ MongoDB Atlas integration has been completed successfully.
-- ✅ End-to-End testing has been completed successfully.
-- ✅ All changes have been merged into the **main** branch following the team's Git workflow.
-- ✅ The application is stable and ready for **Milestone 4 – Reporting & Export** development.
-
-

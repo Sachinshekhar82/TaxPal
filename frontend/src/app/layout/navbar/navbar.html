@@ -1,9 +1,18 @@
 <header class="navbar">
   <div class="navbar-left">
-    <button class="hamburger-btn" (click)="onToggleSidebar()" aria-label="Toggle Sidebar"><i class="ph ph-list"></i></button>
+    <button class="hamburger-btn" (click)="onToggleSidebar()" aria-label="Toggle Sidebar">
+      <i class="ph ph-list"></i>
+    </button>
   </div>
   
   <div class="navbar-right">
+    <!-- Dark Mode Toggle in Top Navbar -->
+    <button class="theme-toggle-btn" (click)="toggleTheme()" aria-label="Toggle Dark Mode">
+      <i [class]="isDarkTheme ? 'ph ph-sun' : 'ph ph-moon-stars'"></i>
+      <span>{{ isDarkTheme ? 'Light' : 'Dark' }}</span>
+    </button>
+
+    <!-- User Profile Section -->
     <div class="user-profile">
       <div class="avatar">{{ userInitials }}</div>
       <span class="user-name">{{ userName }}</span>

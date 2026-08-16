@@ -10,6 +10,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const taxEstimateRoutes = require('./routes/taxEstimateRoutes');
 const taxCalendarRoutes = require('./routes/taxCalendarRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 const { notFound } = require('./middleware/notFoundMiddleware');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
@@ -36,6 +37,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/tax-estimates', taxEstimateRoutes);
 app.use('/api/tax-calendar', taxCalendarRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Error Handling
 app.use(notFound);

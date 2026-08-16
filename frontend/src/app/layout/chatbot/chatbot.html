@@ -1,0 +1,186 @@
+<!-- Floating Chat Trigger Area -->
+<div class="chat-trigger-wrapper">
+
+  <!-- Desktop Hover Tooltip -->
+  <div class="chat-hover-tooltip" *ngIf="!isOpen && !showWelcomePopover">
+    Welcome to TaxPal AI
+  </div>
+
+  <!-- Dashboard Welcome Popover -->
+  <div class="ai-welcome-popover" *ngIf="showWelcomePopover && !isOpen">
+    <button class="popover-close-btn" (click)="dismissWelcomePopover($event)" aria-label="Close message">&times;</button>
+    <div class="popover-body" (click)="openChatFromPopover()">
+      <div class="popover-title">
+        <i class="ph ph-sparkle"></i>
+        <span>Welcome to TaxPal AI! 👋</span>
+      </div>
+      <p class="popover-desc">Your personal financial assistant is ready to help. Ask me about your budgets, transactions, taxes, reminders, or reports.</p>
+      <div class="popover-cta">
+        <span>Try asking: <em>"What's my remaining budget?"</em></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Chat Button Trigger -->
+  <button class="chat-trigger-btn" (click)="toggleChat()" [attr.aria-label]="isOpen ? 'Close Chat' : 'Open TaxPal AI Assistant'">
+    <i class="ph" [ngClass]="isOpen ? 'ph-x' : 'ph-sparkle'"></i>
+    <span class="trigger-badge" *ngIf="!isOpen">AI</span>
+  </button>
+</div>
+
+<!-- Floating Chat Window Drawer -->
+<div class="chat-window" [class.open]="isOpen">
+  <!-- Chat Header -->
+  <div class="chat-header">
+    <div class="header-info">
+      <div class="avatar-icon">
+        <i class="ph ph-sparkle"></i>
+      </div>
+      <div>
+        <h3 class="header-title">TaxPal AI Assistant</h3>
+        <p class="header-status">
+          <span class="status-dot"></span> Online • Powered by TaxPal
+        </p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" (click)="clearHistory()" title="Clear Chat History">
+        <i class="ph ph-trash"></i>
+      </button>
+      <button class="icon-btn" (click)="toggleChat()" title="Minimize Chat">
+        <i class="ph ph-minus"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Scroll Container -->
+  <div class="chat-body" #scrollContainer>
+    <!-- Welcome Message Card inside Chat Window -->
+    <div class="welcome-card" *ngIf="messages.length === 0 && !isLoading">
+      <div class="welcome-icon"><i class="ph ph-robot"></i></div>
+      <h4>Hello! I'm your TaxPal Financial Assistant.</h4>
+      <p>I can help you analyze transactions, inspect budgets, review tax estimates, or generate downloadable reports.</p>
+    </div>
+
+    <!-- Message Bubbles -->
+    <div *ngFor="let msg of messages" class="msg-row" [ngClass]="msg.role">
+      <div class="msg-avatar" *ngIf="msg.role === 'assistant'">
+        <i class="ph ph-sparkle"></i>
+      </div>
+      
+      <div class="msg-content">
+        <div class="bubble">
+          {{ msg.message }}
+        </div>
+
+        <!-- ACTION RENDERING -->
+        <div class="msg-action" *ngIf="msg.action">
+          
+          <!-- 1. DOWNLOAD Action Button -->
+          <div *ngIf="msg.action.type === 'DOWNLOAD'" class="action-card download-card">
+            <div class="action-file-info">
+              <i class="ph" [ngClass]="msg.action.fileType === 'CSV' ? 'ph-file-csv' : 'ph-file-pdf'"></i>
+              <span class="file-name">{{ msg.action.fileName || 'Financial_Report.pdf' }}</span>
+            </div>
+            <button class="action-btn btn-primary" (click)="onDownloadFile(msg.action)">
+              <i class="ph ph-download-simple"></i> Download {{ msg.action.fileType || 'PDF' }}
+            </button>
+          </div>
+
+          <!-- 2. NAVIGATE Action Button -->
+          <div *ngIf="msg.action.type === 'NAVIGATE'" class="action-card navigate-card">
+            <button class="action-btn btn-secondary" (click)="onNavigate(msg.action.route)">
+              <i class="ph ph-arrow-right"></i> {{ msg.action.label || 'Open Page' }}
+            </button>
+          </div>
+
+          <!-- 3. VIEW Data Cards -->
+          <div *ngIf="msg.action.type === 'VIEW' && msg.action.data" class="action-card data-card">
+            
+            <!-- BUDGET SUMMARY CARD -->
+            <div *ngIf="msg.action.view === 'BUDGET_SUMMARY'" class="card-metric-group">
+              <div class="card-metric-item">
+                <span class="lbl">Total Budget</span>
+                <span class="val">{{ formatCurrency(msg.action.data.totalLimit) }}</span>
+              </div>
+              <div class="card-metric-item">
+                <span class="lbl">Spent</span>
+                <span class="val danger">{{ formatCurrency(msg.action.data.totalSpent) }}</span>
+              </div>
+              <div class="card-metric-item">
+                <span class="lbl">Remaining</span>
+                <span class="val success">{{ formatCurrency(msg.action.data.remaining) }}</span>
+              </div>
+            </div>
+
+            <!-- TAX SUMMARY CARD -->
+            <div *ngIf="msg.action.view === 'TAX_SUMMARY'" class="card-metric-group">
+              <div class="card-metric-item">
+                <span class="lbl">Gross Income</span>
+                <span class="val">{{ formatCurrency(msg.action.data.grossIncomeForQuarter) }}</span>
+              </div>
+              <div class="card-metric-item">
+                <span class="lbl">Taxable Income</span>
+                <span class="val">{{ formatCurrency(msg.action.data.taxableIncome) }}</span>
+              </div>
+              <div class="card-metric-item">
+                <span class="lbl">Estimated Tax</span>
+                <span class="val primary">{{ formatCurrency(msg.action.data.estimatedTax) }}</span>
+              </div>
+            </div>
+
+            <!-- SPENDING BREAKDOWN LIST -->
+            <div *ngIf="msg.action.view === 'SPENDING_BREAKDOWN'" class="card-list">
+              <div *ngFor="let item of (msg.action.data || []).slice(0, 4)" class="card-list-row">
+                <span>{{ item.category }}</span>
+                <strong>{{ formatCurrency(item.amount) }}</strong>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <span class="msg-time" *ngIf="msg.createdAt">
+          {{ msg.createdAt | date:'shortTime' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="msg-row assistant" *ngIf="isLoading">
+      <div class="msg-avatar"><i class="ph ph-sparkle"></i></div>
+      <div class="bubble typing-bubble">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Suggestion Pills -->
+  <div class="suggestions-bar" *ngIf="suggestions.length > 0 && !isLoading">
+    <button 
+      *ngFor="let s of suggestions" 
+      class="suggestion-pill" 
+      (click)="onSelectSuggestion(s)">
+      {{ s }}
+    </button>
+  </div>
+
+  <!-- Chat Input Footer -->
+  <div class="chat-footer">
+    <form (ngSubmit)="sendMessage()" class="input-form">
+      <input 
+        type="text" 
+        [(ngModel)]="userInput" 
+        name="userInput"
+        placeholder="Ask TaxPal AI..." 
+        [disabled]="isLoading" 
+        autocomplete="off" />
+      <button type="submit" [disabled]="!userInput || userInput.trim() === '' || isLoading" class="send-btn">
+        <i class="ph ph-paper-plane-right"></i>
+      </button>
+    </form>
+  </div>
+</div>

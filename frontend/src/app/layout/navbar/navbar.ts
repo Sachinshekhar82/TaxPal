@@ -18,6 +18,7 @@ export class Navbar implements OnInit {
   constructor(private authService: AuthService) {}
 
   ngOnInit() {
+    this.isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
     this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.userName = user.fullName || user.name || 'User';

@@ -26,10 +26,15 @@ function resolvePeriod(periodKey, year) {
       return { startDate: start, endDate: end, label };
     }
 
-    case "current_year": {
-      const start = new Date(now.getFullYear(), 0, 1);
-      const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-      return { startDate: start, endDate: end, label: `${now.getFullYear()}` };
+    case "current_year":
+    case "full_year":
+    case "this_year":
+    case "annual":
+    case "year": {
+      const targetYear = year || now.getFullYear();
+      const start = new Date(targetYear, 0, 1);
+      const end = new Date(targetYear, 11, 31, 23, 59, 59);
+      return { startDate: start, endDate: end, label: `${targetYear}` };
     }
 
     case "q1":
@@ -39,13 +44,24 @@ function resolvePeriod(periodKey, year) {
       const qUpper = normalizedKey.toUpperCase();
       const quarterMonths = { Q1: [0, 2], Q2: [3, 5], Q3: [6, 8], Q4: [9, 11] };
       const [startMonth, endMonth] = quarterMonths[qUpper];
-      const start = new Date(year, startMonth, 1);
-      const end = new Date(year, endMonth + 1, 0, 23, 59, 59);
-      return { startDate: start, endDate: end, label: `${qUpper} ${year}` };
+      const targetYear = year || now.getFullYear();
+      const start = new Date(targetYear, startMonth, 1);
+      const end = new Date(targetYear, endMonth + 1, 0, 23, 59, 59);
+      return { startDate: start, endDate: end, label: `${qUpper} ${targetYear}` };
     }
 
-    default:
-      throw new Error(`Unknown period: ${periodKey}`);
+    default: {
+      const numericYear = parseInt(normalizedKey, 10);
+      if (!isNaN(numericYear) && numericYear > 1900 && numericYear < 2100) {
+        const start = new Date(numericYear, 0, 1);
+        const end = new Date(numericYear, 11, 31, 23, 59, 59);
+        return { startDate: start, endDate: end, label: `${numericYear}` };
+      }
+      // Default fallback to current year
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+      return { startDate: start, endDate: end, label: `${now.getFullYear()}` };
+    }
   }
 }
 

@@ -2,6 +2,7 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const Report = require("../models/Report");
 const reportService = require("../services/reportService");
+const { generateCSV, generatePDF } = require("../utils/exportUtils");
 
 const generateReport = async (req, res, next) => {
   try {
@@ -106,18 +107,30 @@ const downloadReportFile = async (req, res, next) => {
       });
     }
 
-    if (!fs.existsSync(report.filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: "The requested report file could not be found on the server.",
-      });
+    let filePath = report.filePath;
+    const safeFileName = `${report.reportType}_${report.userId}_${report._id}`;
+
+    // If file is missing on disk, regenerate PDF or CSV file on the fly using report.data!
+    if (!filePath || !fs.existsSync(filePath)) {
+      if (report.format === "CSV") {
+        filePath = generateCSV(safeFileName, report.reportType, report.data);
+      } else {
+        filePath = generatePDF(safeFileName, report.reportType, report.data);
+      }
+      report.filePath = filePath;
+      await report.save();
     }
 
-    // Determine download filename
     const ext = report.format === "CSV" ? ".csv" : ".pdf";
-    const downloadName = `${report.reportName.replace(/\s+/g, "_")}${ext}`;
+    const cleanTitle = (report.reportName || "Report").replace(/[^a-zA-Z0-9_\-]/g, "_");
+    const downloadName = `${cleanTitle}${ext}`;
 
-    res.download(report.filePath, downloadName);
+    const mimeType = report.format === "CSV" ? "text/csv" : "application/pdf";
+    res.setHeader("Content-Type", mimeType);
+    res.setHeader("Content-Disposition", `attachment; filename="${downloadName}"`);
+
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
   } catch (error) {
     next(error);
   }
