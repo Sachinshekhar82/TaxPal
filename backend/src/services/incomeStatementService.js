@@ -21,11 +21,11 @@ async function getIncomeStatementData(userId, startDate, endDate) {
 
   const incomeBreakdown = breakdown
     .filter((row) => row._id.type === "income")
-    .map((row) => ({ category: row._id.category, total: row.total }));
+    .map((row) => ({ category: row._id.category, total: row.total, amount: row.total }));
 
   const expenseBreakdown = breakdown
     .filter((row) => row._id.type === "expense")
-    .map((row) => ({ category: row._id.category, total: row.total }));
+    .map((row) => ({ category: row._id.category, total: row.total, amount: row.total }));
 
   const totalIncome = incomeBreakdown.reduce((sum, row) => sum + row.total, 0);
   const totalExpenses = expenseBreakdown.reduce(
@@ -35,9 +35,11 @@ async function getIncomeStatementData(userId, startDate, endDate) {
   const netIncome = totalIncome - totalExpenses;
 
   return {
-    totalIncome,
-    totalExpenses,
-    netIncome,
+    metrics: {
+      totalIncome,
+      totalExpenses,
+      netIncome,
+    },
     incomeBreakdown,
     expenseBreakdown,
   };
