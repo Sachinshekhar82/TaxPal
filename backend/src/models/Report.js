@@ -34,6 +34,10 @@ const reportSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    data: {
+      type: mongoose.Schema.Types.Mixed,
+      required: true,
+    },
   },
   { timestamps: true }, // createdAt = "Generated Date" shown in the table
 );

@@ -13,14 +13,14 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Find user and attach to request
-      const user = await User.findById(decoded.id).select('name email');
+      const user = await User.findById(decoded.id).select('name email country');
       if (!user) {
         return res.status(401).json({
           success: false,
           message: 'Not authorized. Invalid or expired token.'
         });
       }
-      req.user = { id: user._id, email: user.email, name: user.name };
+      req.user = { id: user._id, email: user.email, name: user.name, country: user.country };
 
       next();
     } catch (error) {
