@@ -37,6 +37,10 @@ app.head('/', (req, res) => {
   res.status(200).end();
 });
 
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
