@@ -184,9 +184,17 @@
             <div class="toggle-row">
               <div class="toggle-info">
                 <label>Tax Filing Deadlines</label>
-                <p class="text-muted">Get notifications for quarterly and annual tax estimation dates.</p>
+                <p class="text-muted">Get email notifications for upcoming quarterly and annual tax payment dates.</p>
               </div>
               <input type="checkbox" [(ngModel)]="notifications.taxDeadlines" name="taxDeadlines" class="toggle-checkbox">
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <label>Tax Payment Confirmation</label>
+                <p class="text-muted">Receive an email confirmation when a tax payment is marked as completed.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="notifications.taxPaymentConfirmation" name="taxPaymentConfirmation" class="toggle-checkbox">
             </div>
           </div>
 

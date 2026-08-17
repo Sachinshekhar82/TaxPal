@@ -12,6 +12,13 @@ const userSchema = new mongoose.Schema(
       enum: ["low", "middle", "high", ""],
       default: "",
     },
+    notificationPreferences: {
+      emailAlerts: { type: Boolean, default: true },
+      weeklyDigest: { type: Boolean, default: false },
+      budgetAlerts: { type: Boolean, default: true },
+      taxDeadlines: { type: Boolean, default: true },
+      taxPaymentConfirmation: { type: Boolean, default: true },
+    },
   },
   { timestamps: true },
 );

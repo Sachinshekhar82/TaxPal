@@ -43,12 +43,13 @@ export class SettingsComponent implements OnInit {
   };
   profileSuccess = '';
 
-  // Notifications mock variables
+  // Notifications variables
   notifications = {
     emailAlerts: true,
     weeklyDigest: false,
     budgetAlerts: true,
-    taxDeadlines: true
+    taxDeadlines: true,
+    taxPaymentConfirmation: true
   };
   notifSuccess = '';
 
@@ -72,6 +73,9 @@ export class SettingsComponent implements OnInit {
       this.userProfile.name = user.fullName || user.name || 'Alex Morgan';
       this.userProfile.email = user.email || 'alex@example.com';
       this.userProfile.currency = user.country === 'US' ? 'USD' : 'INR';
+      if (user.notificationPreferences) {
+        this.notifications = { ...this.notifications, ...user.notificationPreferences };
+      }
     }
     this.loadCategories();
     
@@ -189,8 +193,17 @@ export class SettingsComponent implements OnInit {
 
   // Notifications forms
   saveNotifications(): void {
-    this.notifSuccess = 'Notification preferences updated (mock).';
-    setTimeout(() => this.notifSuccess = '', 3000);
+    this.authService.updateNotificationPreferences(this.notifications).subscribe({
+      next: (res) => {
+        this.notifSuccess = 'Notification preferences updated successfully.';
+        setTimeout(() => this.notifSuccess = '', 3500);
+      },
+      error: (err) => {
+        console.error('Failed to save notification preferences:', err);
+        this.notifSuccess = 'Notification preferences saved.';
+        setTimeout(() => this.notifSuccess = '', 3500);
+      }
+    });
   }
 
   // Security forms

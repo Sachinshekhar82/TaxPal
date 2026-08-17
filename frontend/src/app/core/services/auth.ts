@@ -66,4 +66,15 @@ export class AuthService {
       default: return '₹';
     }
   }
+
+  updateNotificationPreferences(prefs: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/notifications`, prefs).pipe(
+      tap(res => {
+        if (res.success && res.data && res.data.user) {
+          localStorage.setItem('currentUser', JSON.stringify(res.data.user));
+          this.currentUserSubject.next(res.data.user);
+        }
+      })
+    );
+  }
 }

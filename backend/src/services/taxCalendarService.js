@@ -1,4 +1,7 @@
 const TaxEstimate = require("../models/TaxEstimate");
+const User = require("../models/User");
+const emailService = require("./emailService");
+const taxReminderService = require("./taxReminderService");
 
 const {
   getQuarterFromDate,
@@ -151,11 +154,62 @@ exports.markPaymentDone = async (id, userId) => {
     throw new Error("Reminder not found");
   }
 
-  reminder.paymentStatus = "Completed";
+  // 1. Check for Duplicate Payment Confirmation
+  if (reminder.paymentStatus === "Completed") {
+    return {
+      reminder,
+      alreadyCompleted: true,
+      emailSent: false,
+      message: "Payment has already been marked as completed.",
+    };
+  }
 
+  // 2. Update Payment Status in Database FIRST
+  reminder.paymentStatus = "Completed";
+  reminder.paymentCompletedAt = new Date();
   await reminder.save();
 
-  return reminder;
+  let emailSent = false;
+  let emailMessage = "Tax payment marked as completed successfully.";
+
+  // 3. Check User Notification Preferences & Send Email
+  try {
+    const user = await User.findById(userId);
+    const notifPrefs = user?.notificationPreferences || {};
+    
+    // Only send email if taxPaymentConfirmation is NOT explicitly disabled
+    if (user && user.email && notifPrefs.taxPaymentConfirmation !== false) {
+      const currencySymbol = user.country === "US" ? "$" : "₹";
+      await emailService.sendTaxPaymentConfirmationEmail({
+        toEmail: user.email,
+        userName: user.name || user.username,
+        quarter: reminder.quarter,
+        estimatedTax: reminder.estimatedTax,
+        paymentDate: reminder.paymentCompletedAt,
+        currencySymbol,
+      });
+
+      reminder.confirmationEmailSent = true;
+      reminder.confirmationEmailSentAt = new Date();
+      await reminder.save();
+
+      emailSent = true;
+      emailMessage = "Tax payment marked as completed successfully. A confirmation email has been sent to your registered email.";
+    } else {
+      emailMessage = "Tax payment marked as completed.";
+    }
+  } catch (emailErr) {
+    console.error("❌ [TaxCalendarService] Email sending failed during payment completion:", emailErr.message);
+    emailSent = false;
+    emailMessage = "Tax payment marked as completed. We couldn't send the confirmation email right now.";
+  }
+
+  return {
+    reminder,
+    alreadyCompleted: false,
+    emailSent,
+    message: emailMessage,
+  };
 };
 
 // ==============================
@@ -173,8 +227,17 @@ exports.undoPaymentDone = async (id, userId) => {
   }
 
   reminder.paymentStatus = "Pending";
+  reminder.paymentCompletedAt = null;
 
   await reminder.save();
 
   return reminder;
+};
+
+// ==============================
+// TRIGGER UPCOMING REMINDERS MANUAL RUN
+// ==============================
+
+exports.triggerReminders = async () => {
+  return await taxReminderService.processUpcomingTaxReminders();
 };

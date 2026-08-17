@@ -123,15 +123,17 @@ exports.undoMarkAsRead = async (req, res) => {
 
 exports.markPaymentDone = async (req, res) => {
   try {
-    const data = await taxCalendarService.markPaymentDone(
+    const result = await taxCalendarService.markPaymentDone(
       req.params.id,
       req.user.id
     );
 
     res.json({
       success: true,
-      message: "Payment marked as completed",
-      data,
+      message: result.message,
+      alreadyCompleted: result.alreadyCompleted,
+      emailSent: result.emailSent,
+      data: result.reminder,
     });
   } catch (error) {
     res.status(404).json({
@@ -159,6 +161,26 @@ exports.undoPaymentDone = async (req, res) => {
     });
   } catch (error) {
     res.status(404).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==============================
+// TRIGGER TAX REMINDERS JOB
+// ==============================
+
+exports.triggerReminders = async (req, res) => {
+  try {
+    const summary = await taxCalendarService.triggerReminders();
+    res.json({
+      success: true,
+      message: "Tax reminder email job executed successfully",
+      summary,
+    });
+  } catch (error) {
+    res.status(500).json({
       success: false,
       message: error.message,
     });

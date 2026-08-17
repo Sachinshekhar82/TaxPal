@@ -222,6 +222,11 @@
       <p class="card-subtitle">Quarterly tax payment deadlines & reminders</p>
     </div>
 
+    <!-- Feedback Message Alert -->
+    <div style="margin: 1rem 0 0 0; padding: 0.75rem 1rem; border-radius: 8px; background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 0.875rem; font-weight: 500;" *ngIf="actionFeedback">
+      <i class="ph ph-check-circle"></i> {{ actionFeedback }}
+    </div>
+
     <!-- Empty State -->
     <div class="placeholder-state" *ngIf="alertGroups.length === 0" style="padding: 4rem 2rem; min-height: 250px;">
       <i class="ph ph-calendar-blank placeholder-icon" style="font-size: 2.5rem; margin-bottom: 0.75rem;"></i>

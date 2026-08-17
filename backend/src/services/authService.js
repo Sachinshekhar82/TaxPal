@@ -10,7 +10,14 @@ const formatUserResponse = (user) => {
     username: user.username,
     email: user.email,
     country: user.country,
-    incomeBracket: user.income_bracket
+    incomeBracket: user.income_bracket,
+    notificationPreferences: user.notificationPreferences || {
+      emailAlerts: true,
+      weeklyDigest: false,
+      budgetAlerts: true,
+      taxDeadlines: true,
+      taxPaymentConfirmation: true,
+    }
   };
 };
 
@@ -90,8 +97,26 @@ const getCurrentUser = async (userId) => {
   return formatUserResponse(user);
 };
 
+const updateNotificationPreferences = async (userId, preferences) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    const error = new Error('User not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  user.notificationPreferences = {
+    ...user.notificationPreferences,
+    ...preferences
+  };
+
+  await user.save();
+  return formatUserResponse(user);
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getCurrentUser,
+  updateNotificationPreferences,
 };

@@ -41,8 +41,22 @@ const getMe = async (req, res, next) => {
   }
 };
 
+const updateNotifications = async (req, res, next) => {
+  try {
+    const user = await authService.updateNotificationPreferences(req.user.id, req.body);
+    res.status(200).json({
+      success: true,
+      message: 'Notification preferences updated successfully',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  updateNotifications,
 };

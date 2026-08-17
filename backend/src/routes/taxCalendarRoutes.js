@@ -10,6 +10,7 @@ const {
   undoMarkAsRead,
   markPaymentDone,
   undoPaymentDone,
+  triggerReminders,
 } = require("../controllers/taxCalendarController");
 
 const { protect } = require("../middleware/authMiddleware");
@@ -39,5 +40,8 @@ router.patch("/:id/payment", protect, markPaymentDone);
 
 // Undo payment completed
 router.patch("/:id/payment/undo", protect, undoPaymentDone);
+
+// Manual trigger for tax reminder email job (for dev/cron webhooks)
+router.post("/trigger-reminders", protect, triggerReminders);
 
 module.exports = router;

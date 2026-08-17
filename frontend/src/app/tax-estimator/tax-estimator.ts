@@ -767,6 +767,8 @@ export class TaxEstimator implements OnInit {
     }));
   }
 
+  actionFeedback = '';
+
   markAsRead(estimateId: string, event: Event): void {
     event.stopPropagation();
     this.taxCalendarService.markReminderRead(estimateId).subscribe({
@@ -780,7 +782,9 @@ export class TaxEstimator implements OnInit {
   markAsPaid(estimateId: string, event: Event): void {
     event.stopPropagation();
     this.taxCalendarService.markPaymentDone(estimateId).subscribe({
-      next: () => {
+      next: (res: any) => {
+        this.actionFeedback = res.message || 'Tax payment marked as completed successfully.';
+        setTimeout(() => this.actionFeedback = '', 6000);
         this.loadCalendar();
       },
       error: (err) => console.error('Error marking payment as completed:', err)

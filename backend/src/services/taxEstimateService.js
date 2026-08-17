@@ -38,6 +38,38 @@ const createEstimate = async (userId, payload) => {
   const data = mapAndCalculate(payload);
   data.userId = userId;
   const estimate = await TaxEstimate.create(data);
+
+  // Send immediate Tax Schedule / Calendar Created Email Reminder to registered user email
+  try {
+    const User = require('../models/User');
+    const emailService = require('./emailService');
+    const { calculateDaysRemaining } = require('../utils/taxCalendarUtils');
+
+    const user = await User.findById(userId);
+    const notifPrefs = user?.notificationPreferences || {};
+
+    if (user && user.email && notifPrefs.taxDeadlines !== false) {
+      const daysRemaining = calculateDaysRemaining(estimate.dueDate);
+      const currencySymbol = user.country === 'US' ? '$' : '₹';
+
+      console.log(`📧 [TaxEstimateService] Sending initial tax calendar reminder email to ${user.email}...`);
+      await emailService.sendTaxReminderEmail({
+        toEmail: user.email,
+        userName: user.name || user.username,
+        quarter: estimate.quarter,
+        estimatedTax: estimate.estimatedTax,
+        dueDate: estimate.dueDate,
+        daysRemaining,
+        currencySymbol
+      });
+
+      estimate.reminderEmailSentAt = new Date();
+      await estimate.save();
+    }
+  } catch (emailErr) {
+    console.error('❌ [TaxEstimateService] Error sending initial tax calendar email:', emailErr.message);
+  }
+
   return formatTaxEstimate(estimate);
 };
 

@@ -63,6 +63,30 @@ const taxEstimateSchema = new mongoose.Schema(
       enum: ["Pending", "Completed"],
       default: "Pending",
     },
+    paymentCompletedAt: {
+      type: Date,
+      default: null,
+    },
+    reminderEmailSent7Days: {
+      type: Boolean,
+      default: false,
+    },
+    reminderEmailSent1Day: {
+      type: Boolean,
+      default: false,
+    },
+    reminderEmailSentAt: {
+      type: Date,
+      default: null,
+    },
+    confirmationEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+    confirmationEmailSentAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
