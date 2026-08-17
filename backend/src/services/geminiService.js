@@ -14,16 +14,16 @@ Your primary role is to answer questions using the logged-in user's personal fin
 
 CRITICAL INSTRUCTIONS:
 1. NEVER invent, fake, or extrapolate financial figures or tax amounts. Rely strictly on the provided Context Data.
-2. If the requested information is not available in the Context Data, politely explain what is missing.
-3. Be professional, friendly, clear, and concise. Avoid dense walls of text.
+2. FORMAT QUESTION WORKFLOW:
+   - If the user asks to generate a report (e.g. "Generate my tax report", "Generate my budget report") BUT HAS NOT specified a format (PDF or CSV):
+     - Ask the user which period and format (PDF or CSV) they prefer.
+     - Set "intent": "NONE" and "parameters": {} so that NO report action button is generated before they choose!
+   - If the user DOES specify a format (e.g. "PDF", "CSV", "as PDF", "generate in CSV format") OR is answering a format question (e.g. "PDF"):
+     - Set "intent": "DOWNLOAD_REPORT" or "GENERATE_AND_EMAIL_REPORT".
+     - Set "parameters": { "reportType": "...", "format": "PDF" | "CSV", "period": "..." }.
+     - In "reply", confirm that their report is ready for download/email below.
+3. Be professional, friendly, clear, and concise.
 4. Currency symbol to use: ${contextData.currencySymbol || '$'}.
-5. Determine if the user's request requires an action. Supported intents:
-   - "DOWNLOAD_REPORT": When user asks to generate/download a report (parameters: reportType: 'income_statement' | 'expense' | 'income' | 'transaction' | 'budget_performance' | 'tax_summary' | 'savings' | 'financial_summary' | 'monthly_financial' | 'complete_financial', period: 'current_month' | 'last_month' | 'current_year' | 'july' | 'august' | 'q1' | 'q2' | 'q3' | 'q4', format: 'PDF' | 'CSV', startDate, endDate).
-   - "GENERATE_AND_EMAIL_REPORT": When user asks to generate AND email a report to their registered email (parameters: reportType, period, format, emailRequested: true, startDate, endDate).
-   - "EXPORT_TRANSACTIONS": When user asks to export transactions to Excel/CSV.
-   - "NAVIGATE": When user asks to go to/open a page (parameters: route: '/dashboard' | '/transactions' | '/budgets' | '/tax-estimator' | '/reports' | '/settings' | '/income' | '/expense').
-   - "VIEW_CARD": When user asks to see a summary card (parameters: view: 'BUDGET_SUMMARY' | 'SPENDING_BREAKDOWN' | 'TAX_SUMMARY' | 'TRANSACTION_SUMMARY').
-   - "NONE": For standard informational responses.
 
 FORMATTING YOUR RESPONSE:
 Always reply in JSON format with two keys:
@@ -38,7 +38,7 @@ Do not enclose the JSON in markdown block unless necessary, but raw JSON string 
   // If Gemini API Key is missing, provide intelligent local fallback parsing
   if (!apiKey || apiKey === "YOUR_REAL_KEY" || apiKey.trim() === "") {
     console.log("ℹ️ GEMINI_API_KEY is not set or placeholder. Operating in intelligent fallback mode.");
-    return fallbackResponseGenerator(userPrompt, contextData);
+    return fallbackResponseGenerator(userPrompt, contextData, history);
   }
 
   try {
@@ -82,29 +82,23 @@ USER QUESTION:
   } catch (error) {
     console.error("⚠️ Gemini API Error:", error.message);
     // Fall back to rule-based parser on API error (e.g. invalid key or network issue)
-    return fallbackResponseGenerator(userPrompt, contextData);
+    return fallbackResponseGenerator(userPrompt, contextData, history);
   }
 }
 
 /**
  * Intelligent local fallback parser when GEMINI_API_KEY is absent or API call fails
  */
-function fallbackResponseGenerator(prompt, ctx) {
+function fallbackResponseGenerator(prompt, ctx, history = []) {
   const lower = prompt.toLowerCase();
   const symbol = ctx.currencySymbol || "$";
 
+  // Check if format (PDF / CSV / Excel) is specified in current prompt or recent message
+  const hasFormatMention = lower.includes("pdf") || lower.includes("csv") || lower.includes("excel");
+  const isDirectFormatChoice = lower === "pdf" || lower === "csv" || lower === "excel" || lower.startsWith("pdf") || lower.startsWith("csv");
+
   // Detect email request intent
   const isEmailIntent = lower.includes("email") || lower.includes("send to my mail") || lower.includes("send it to my email") || lower.includes("send to registered email");
-
-  // Detect period / month in natural language prompt
-  let period = "current_month";
-  if (lower.includes("july")) period = "july";
-  else if (lower.includes("august")) period = "august";
-  else if (lower.includes("june")) period = "june";
-  else if (lower.includes("may")) period = "may";
-  else if (lower.includes("last month")) period = "last_month";
-  else if (lower.includes("this month")) period = "current_month";
-  else if (lower.includes("this year") || lower.includes("2026")) period = "current_year";
 
   // Detect report type in natural language prompt
   let reportType = "income_statement";
@@ -117,26 +111,44 @@ function fallbackResponseGenerator(prompt, ctx) {
   else if (lower.includes("summary") || lower.includes("complete")) reportType = "financial_summary";
   else if (lower.includes("monthly")) reportType = "monthly_financial";
 
-  // 1. Report & Export Requests
-  if (lower.includes("generate") || lower.includes("download") || lower.includes("export") || lower.includes("report") || isEmailIntent) {
-    if (lower.includes("excel") || lower.includes("csv")) {
-      return {
-        reply: "I've prepared your transactions export file.",
-        intent: isEmailIntent ? "GENERATE_AND_EMAIL_REPORT" : "EXPORT_TRANSACTIONS",
-        parameters: { reportType: "transaction", format: "CSV", period, emailRequested: isEmailIntent },
-      };
-    }
+  // Check recent history if assistant asked for format
+  const lastAssistantMsg = (history || []).slice().reverse().find(h => h.role === "assistant");
+  const wasAskedFormat = lastAssistantMsg && (lastAssistantMsg.message.includes("format") || lastAssistantMsg.message.includes("PDF or CSV"));
 
+  // If user asks for a report BUT hasn't specified format and wasn't answering a format question:
+  if ((lower.includes("generate") || lower.includes("download") || lower.includes("report")) && !hasFormatMention && !isDirectFormatChoice && !wasAskedFormat) {
+    const reportTitle = reportType.replace(/_/g, " ");
+    return {
+      reply: `I can generate your ${reportTitle}. Which period would you like it for (e.g., current month, Q3, current year)? And what format do you prefer (PDF or CSV)?`,
+      intent: "NONE",
+      parameters: {},
+    };
+  }
+
+  // Detect period / month in natural language prompt
+  let period = "current_month";
+  if (lower.includes("july")) period = "july";
+  else if (lower.includes("august")) period = "august";
+  else if (lower.includes("june")) period = "june";
+  else if (lower.includes("may")) period = "may";
+  else if (lower.includes("last month")) period = "last_month";
+  else if (lower.includes("this month")) period = "current_month";
+  else if (lower.includes("this year") || lower.includes("2026") || lower.includes("q3")) period = lower.includes("q3") ? "q3" : "current_year";
+
+  const requestedFormat = lower.includes("csv") || lower.includes("excel") ? "CSV" : "PDF";
+
+  // 1. Report & Export Requests (when format IS specified or user answered)
+  if (lower.includes("generate") || lower.includes("download") || lower.includes("export") || lower.includes("report") || hasFormatMention || isDirectFormatChoice || isEmailIntent) {
     const reportTitle = reportType.replace(/_/g, " ");
     const intentName = isEmailIntent ? "GENERATE_AND_EMAIL_REPORT" : "DOWNLOAD_REPORT";
     const replyText = isEmailIntent 
-      ? `Generating your ${reportTitle} report and emailing it to your registered email address.`
-      : `Your ${reportTitle} report is ready!`;
+      ? `Generating your ${reportTitle} in ${requestedFormat} format and emailing it to your registered email address.`
+      : `Your ${reportTitle} is ready in ${requestedFormat} format!`;
 
     return {
       reply: replyText,
       intent: intentName,
-      parameters: { reportType, period, format: "PDF", emailRequested: isEmailIntent },
+      parameters: { reportType, period, format: requestedFormat, emailRequested: isEmailIntent },
     };
   }
 
