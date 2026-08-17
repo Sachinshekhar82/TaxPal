@@ -107,7 +107,7 @@ async function generateReport(userId, { reportType, period = "current_month", fo
   const report = await Report.create({
     userId,
     reportName,
-    reportType,
+    reportType: normalizedType,
     period: periodLabel,
     format,
     filePath,

@@ -16,7 +16,18 @@ const reportSchema = new mongoose.Schema(
     },
     reportType: {
       type: String,
-      enum: ["income_statement", "tax_summary", "budget_performance"],
+      enum: [
+        "income_statement", 
+        "tax_summary", 
+        "budget_performance",
+        "expense",
+        "income",
+        "transaction",
+        "savings",
+        "financial_summary",
+        "monthly_financial",
+        "complete_financial"
+      ],
       required: true,
     },
     period: {
