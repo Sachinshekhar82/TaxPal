@@ -194,7 +194,7 @@
   </div>
 
   <!-- Quick Suggestion Pills -->
-  <div class="suggestions-bar" *ngIf="suggestions.length > 0 && !isLoading">
+  <div class="suggestions-bar" *ngIf="suggestions.length > 0 && !isLoading" (wheel)="onSuggestionsWheel($event)">
     <button 
       *ngFor="let s of suggestions" 
       class="suggestion-pill" 

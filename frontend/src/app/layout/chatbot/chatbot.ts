@@ -179,6 +179,14 @@ export class ChatbotComponent implements OnInit {
     this.sendMessage(suggestion);
   }
 
+  onSuggestionsWheel(event: WheelEvent): void {
+    if (event.deltaY !== 0) {
+      event.preventDefault();
+      const container = event.currentTarget as HTMLElement;
+      container.scrollLeft += event.deltaY;
+    }
+  }
+
   onNavigate(route?: string): void {
     if (route) {
       this.router.navigateByUrl(route);

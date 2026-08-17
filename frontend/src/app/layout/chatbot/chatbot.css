@@ -498,11 +498,31 @@
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #a5b4fc #f3f4f6;
+  max-width: 100%;
 }
 
 .suggestions-bar::-webkit-scrollbar {
-  height: 3px;
+  height: 5px;
+}
+
+.suggestions-bar::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.suggestions-bar::-webkit-scrollbar-thumb {
+  background: #a5b4fc;
+  border-radius: 4px;
+}
+
+.suggestions-bar::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
 }
 
 .suggestion-pill {
