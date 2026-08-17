@@ -196,6 +196,33 @@ export class ChatbotComponent implements OnInit {
     window.open(fullUrl, '_blank');
   }
 
+  onEmailReport(action: any): void {
+    if (!action || !action.reportId) {
+      alert('Report not ready for email.');
+      return;
+    }
+
+    action.isEmailing = true;
+    this.chatService.emailReport(action.reportId).subscribe({
+      next: (res: any) => {
+        action.isEmailing = false;
+        action.emailStatus = {
+          sent: true,
+          message: res.message || 'Report sent to your registered email address! 📧'
+        };
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        action.isEmailing = false;
+        action.emailStatus = {
+          sent: false,
+          message: err.error?.message || "Your report was generated successfully, but we couldn't send the email right now. You can download it here."
+        };
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   formatCurrency(val?: number): string {
     if (val === undefined || val === null || isNaN(val)) return `${this.currencySymbol}0.00`;
     const formatted = Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

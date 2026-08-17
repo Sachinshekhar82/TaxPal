@@ -23,7 +23,19 @@ Add the following to `backend/.env`:
 ```env
 GEMINI_API_KEY=your_real_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
+RESEND_API_KEY=your_resend_api_key_here
+EMAIL_FROM=TaxPal <notifications@taxpal.com>
 ```
+
+---
+
+# 📧 Automated Tax Email Notifications
+
+TaxPal includes an automated email notification system supporting transactional emails via **Resend API** / **SMTP**:
+- **Upcoming Tax Payment Reminders**: Scheduled reminders sent 7 days and 1 day before quarterly tax deadlines.
+- **Immediate Tax Calendar Entry Email**: Dispatched automatically to the user's registered email whenever a new tax estimate calculation is saved.
+- **Tax Payment Completion Confirmations**: Dispatched automatically when a tax payment is marked as completed in the Tax Calendar.
+- **User Notification Preferences**: Manage email alert toggles directly from `Settings` -> `Notifications`.
 
 ---
 

@@ -20,12 +20,26 @@ const getTransporter = () => {
   return null;
 };
 
+const fs = require('fs');
+const path = require('path');
+
 /**
  * Send Email via Resend API (HTTP REST)
  */
-const sendViaResend = async ({ to, subject, html }) => {
+const sendViaResend = async ({ to, subject, html, attachments }) => {
   const apiKey = process.env.RESEND_API_KEY || process.env.EMAIL_PROVIDER_API_KEY;
   const fromEmail = 'onboarding@resend.dev';
+
+  const payload = {
+    from: fromEmail,
+    to: [to],
+    subject,
+    html
+  };
+
+  if (attachments && attachments.length > 0) {
+    payload.attachments = attachments;
+  }
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -33,12 +47,7 @@ const sendViaResend = async ({ to, subject, html }) => {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [to],
-      subject,
-      html
-    })
+    body: JSON.stringify(payload)
   });
 
   const responseData = await response.json();
@@ -55,7 +64,7 @@ const sendViaResend = async ({ to, subject, html }) => {
 /**
  * Core send email dispatcher
  */
-const sendEmail = async ({ to, subject, html, text }) => {
+const sendEmail = async ({ to, subject, html, text, attachments }) => {
   const fromEmail = process.env.EMAIL_FROM || 'TaxPal <notifications@taxpal.com>';
   const resendApiKey = process.env.RESEND_API_KEY || process.env.EMAIL_PROVIDER_API_KEY;
 
@@ -63,7 +72,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
   if (resendApiKey) {
     try {
       console.log(`📧 [EmailService] Sending email to ${to} via Resend API...`);
-      return await sendViaResend({ to, subject, html });
+      return await sendViaResend({ to, subject, html, attachments });
     } catch (err) {
       console.error(`❌ [EmailService] Resend API failed:`, err.message);
       // Fall through to SMTP or simulation
@@ -80,7 +89,8 @@ const sendEmail = async ({ to, subject, html, text }) => {
         to,
         subject,
         text,
-        html
+        html,
+        attachments
       });
     } catch (err) {
       console.error(`❌ [EmailService] SMTP Transport failed:`, err.message);
@@ -93,6 +103,9 @@ const sendEmail = async ({ to, subject, html, text }) => {
   console.log(`To: ${to}`);
   console.log(`From: ${fromEmail}`);
   console.log(`Subject: ${subject}`);
+  if (attachments && attachments.length > 0) {
+    console.log(`Attachment: ${attachments[0].filename}`);
+  }
   console.log(`--------------------------------------------------------------------`);
   console.log(text || 'HTML Content Generated');
   console.log(`====================================================================\n`);
@@ -307,4 +320,106 @@ TaxPal Personal Finance & Tax Estimator
   `.trim();
 
   return await sendEmail({ to: toEmail, subject, text: textContent, html: htmlContent });
+};
+
+/**
+ * 3. Send Financial Report Email with Attachment
+ */
+exports.sendReportEmail = async ({ toEmail, userName, reportName, periodLabel, filePath, format = 'PDF' }) => {
+  if (!toEmail) {
+    throw new Error('No recipient email provided for report email');
+  }
+
+  const name = userName || 'User';
+  const title = reportName || 'Financial Report';
+  const period = periodLabel || 'Requested Period';
+  const subject = `TaxPal – Your ${title}`;
+
+  let attachments = undefined;
+  if (filePath && fs.existsSync(filePath)) {
+    const fileContent = fs.readFileSync(filePath);
+    const fileName = `${title.replace(/[^a-zA-Z0-9_\-]/g, '_')}.${format.toLowerCase()}`;
+    attachments = [
+      {
+        filename: fileName,
+        content: fileContent.toString('base64')
+      }
+    ];
+  }
+
+  const textContent = `
+TaxPal – Your ${title}
+
+Hi ${name},
+
+Your requested financial report has been generated successfully.
+
+Report: ${title}
+Period: ${period}
+
+Your report is attached to this email.
+
+Regards,
+TaxPal Personal Finance & Tax Estimator
+  `.trim();
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px; color: #1e293b; }
+    .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-top: 6px solid #3b82f6; }
+    .header { font-size: 24px; font-weight: 700; color: #3b82f6; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .greeting { font-size: 16px; margin-bottom: 16px; font-weight: 600; color: #0f172a; }
+    .body-text { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 24px; }
+    .details-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #93c5fd; font-size: 14px; }
+    .detail-row:last-child { border-bottom: none; }
+    .label { color: #1e40af; font-weight: 500; }
+    .value { font-weight: 700; color: #1e3a8a; }
+    .badge-attached { background: #3b82f6; color: #ffffff; padding: 4px 10px; border-radius: 20px; font-weight: 700; font-size: 12px; }
+    .footer { font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      📊 TaxPal Financial Report
+    </div>
+    <div class="greeting">Hi ${name},</div>
+    <div class="body-text">
+      Your requested financial report has been generated successfully.
+    </div>
+
+    <div class="details-box">
+      <div class="detail-row">
+        <span class="label">Report:</span>
+        <span class="value">${title}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Period:</span>
+        <span class="value">${period}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Attachment:</span>
+        <span class="value"><span class="badge-attached">📎 ${format} Attached</span></span>
+      </div>
+    </div>
+
+    <div class="body-text">
+      Please find your generated report attached directly to this email. You can also view all your historical financial reports on TaxPal.
+    </div>
+
+    <div class="footer">
+      Regards,<br>
+      <strong>TaxPal</strong> – Personal Finance & Tax Estimator
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  return await sendEmail({ to: toEmail, subject, text: textContent, html: htmlContent, attachments });
 };

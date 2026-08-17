@@ -196,11 +196,13 @@ async function clearChatHistory(userId) {
 
 function getSuggestions() {
   return [
-    "How much did I spend this month?",
+    "Generate my monthly report",
+    "Show my expense report",
+    "Generate my tax report",
+    "Generate my financial summary",
+    "Email my latest report",
     "What's my remaining budget?",
     "Explain my tax estimate.",
-    "Show my upcoming reminders.",
-    "Generate my monthly report.",
     "Export my transactions.",
   ];
 }

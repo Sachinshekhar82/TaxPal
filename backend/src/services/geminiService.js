@@ -18,7 +18,8 @@ CRITICAL INSTRUCTIONS:
 3. Be professional, friendly, clear, and concise. Avoid dense walls of text.
 4. Currency symbol to use: ${contextData.currencySymbol || '$'}.
 5. Determine if the user's request requires an action. Supported intents:
-   - "DOWNLOAD_REPORT": When user asks to generate/download a report (parameters: reportType: 'income_statement' | 'tax_summary' | 'budget_performance', period: 'current_month' | 'last_month' | 'current_year' | 'q1' | 'q2' | 'q3' | 'q4', format: 'PDF' | 'CSV').
+   - "DOWNLOAD_REPORT": When user asks to generate/download a report (parameters: reportType: 'income_statement' | 'expense' | 'income' | 'transaction' | 'budget_performance' | 'tax_summary' | 'savings' | 'financial_summary' | 'monthly_financial' | 'complete_financial', period: 'current_month' | 'last_month' | 'current_year' | 'july' | 'august' | 'q1' | 'q2' | 'q3' | 'q4', format: 'PDF' | 'CSV', startDate, endDate).
+   - "GENERATE_AND_EMAIL_REPORT": When user asks to generate AND email a report to their registered email (parameters: reportType, period, format, emailRequested: true, startDate, endDate).
    - "EXPORT_TRANSACTIONS": When user asks to export transactions to Excel/CSV.
    - "NAVIGATE": When user asks to go to/open a page (parameters: route: '/dashboard' | '/transactions' | '/budgets' | '/tax-estimator' | '/reports' | '/settings' | '/income' | '/expense').
    - "VIEW_CARD": When user asks to see a summary card (parameters: view: 'BUDGET_SUMMARY' | 'SPENDING_BREAKDOWN' | 'TAX_SUMMARY' | 'TRANSACTION_SUMMARY').
@@ -92,33 +93,50 @@ function fallbackResponseGenerator(prompt, ctx) {
   const lower = prompt.toLowerCase();
   const symbol = ctx.currencySymbol || "$";
 
+  // Detect email request intent
+  const isEmailIntent = lower.includes("email") || lower.includes("send to my mail") || lower.includes("send it to my email") || lower.includes("send to registered email");
+
+  // Detect period / month in natural language prompt
+  let period = "current_month";
+  if (lower.includes("july")) period = "july";
+  else if (lower.includes("august")) period = "august";
+  else if (lower.includes("june")) period = "june";
+  else if (lower.includes("may")) period = "may";
+  else if (lower.includes("last month")) period = "last_month";
+  else if (lower.includes("this month")) period = "current_month";
+  else if (lower.includes("this year") || lower.includes("2026")) period = "current_year";
+
+  // Detect report type in natural language prompt
+  let reportType = "income_statement";
+  if (lower.includes("tax")) reportType = "tax_summary";
+  else if (lower.includes("budget")) reportType = "budget_performance";
+  else if (lower.includes("expense")) reportType = "expense";
+  else if (lower.includes("income")) reportType = "income";
+  else if (lower.includes("transaction")) reportType = "transaction";
+  else if (lower.includes("savings")) reportType = "savings";
+  else if (lower.includes("summary") || lower.includes("complete")) reportType = "financial_summary";
+  else if (lower.includes("monthly")) reportType = "monthly_financial";
+
   // 1. Report & Export Requests
-  if (lower.includes("download") || lower.includes("export") || lower.includes("generate report")) {
-    if (lower.includes("transaction") || lower.includes("excel") || lower.includes("csv")) {
+  if (lower.includes("generate") || lower.includes("download") || lower.includes("export") || lower.includes("report") || isEmailIntent) {
+    if (lower.includes("excel") || lower.includes("csv")) {
       return {
-        reply: "I've prepared your transactions export file for download.",
-        intent: "EXPORT_TRANSACTIONS",
-        parameters: { format: "CSV" },
+        reply: "I've prepared your transactions export file.",
+        intent: isEmailIntent ? "GENERATE_AND_EMAIL_REPORT" : "EXPORT_TRANSACTIONS",
+        parameters: { reportType: "transaction", format: "CSV", period, emailRequested: isEmailIntent },
       };
     }
-    if (lower.includes("tax")) {
-      return {
-        reply: "I've generated your Tax Summary report.",
-        intent: "DOWNLOAD_REPORT",
-        parameters: { reportType: "tax_summary", period: "current_year", format: "PDF" },
-      };
-    }
-    if (lower.includes("budget")) {
-      return {
-        reply: "I've generated your Budget Performance report.",
-        intent: "DOWNLOAD_REPORT",
-        parameters: { reportType: "budget_performance", period: "current_month", format: "PDF" },
-      };
-    }
+
+    const reportTitle = reportType.replace(/_/g, " ");
+    const intentName = isEmailIntent ? "GENERATE_AND_EMAIL_REPORT" : "DOWNLOAD_REPORT";
+    const replyText = isEmailIntent 
+      ? `Generating your ${reportTitle} report and emailing it to your registered email address.`
+      : `Your ${reportTitle} report is ready!`;
+
     return {
-      reply: "I've generated your financial report for download.",
-      intent: "DOWNLOAD_REPORT",
-      parameters: { reportType: "income_statement", period: "current_month", format: "PDF" },
+      reply: replyText,
+      intent: intentName,
+      parameters: { reportType, period, format: "PDF", emailRequested: isEmailIntent },
     };
   }
 

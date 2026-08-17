@@ -136,9 +136,81 @@ const downloadReportFile = async (req, res, next) => {
   }
 };
 
+const emailReport = async (req, res, next) => {
+  try {
+    const User = require("../models/User");
+    const emailService = require("../services/emailService");
+
+    let report;
+    const { id } = req.params;
+    const { reportType, period, format, year, startDate, endDate } = req.body || {};
+
+    if (id && id !== "email") {
+      report = await Report.findOne({ _id: id, userId: req.user.id });
+    }
+
+    if (!report) {
+      report = await reportService.generateReport(req.user.id, {
+        reportType: reportType || "income_statement",
+        period: period || "current_month",
+        format: format || "PDF",
+        year: year ? parseInt(year, 10) : 2026,
+        startDate,
+        endDate
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !user.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Registered user email not found.",
+      });
+    }
+
+    let filePath = report.filePath;
+    if (!filePath || !fs.existsSync(filePath)) {
+      const safeFileName = `${report.reportType}_${report.userId}_${report._id}`;
+      if (report.format === "CSV") {
+        filePath = generateCSV(safeFileName, report.reportType, report.data);
+      } else {
+        filePath = generatePDF(safeFileName, report.reportType, report.data);
+      }
+      report.filePath = filePath;
+      await report.save();
+    }
+
+    await emailService.sendReportEmail({
+      toEmail: user.email,
+      userName: user.name || user.username,
+      reportName: report.reportName,
+      periodLabel: report.period,
+      filePath,
+      format: report.format || "PDF"
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Your ${report.reportName} has been sent to your registered email (${user.email}). 📧`,
+      data: {
+        reportId: report._id,
+        userEmail: user.email,
+        reportName: report.reportName
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error sending report email:", error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to send report email: ${error.message}`
+    });
+  }
+};
+
 module.exports = {
   generateReport,
   getReports,
   deleteReport,
   downloadReportFile,
+  emailReport,
 };

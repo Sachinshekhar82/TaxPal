@@ -17,7 +17,7 @@ function getCurrencySymbolForCountry(country) {
   return '$';
 }
 
-async function generateReport(userId, { reportType, period, format, year = 2026 }) {
+async function generateReport(userId, { reportType, period = "current_month", format = "PDF", year = 2026, startDate, endDate }) {
   const user = await User.findById(userId);
   const userCountry = (user && user.country) ? user.country : "IN"; // default to IN per frontend auth service
 
@@ -26,24 +26,41 @@ async function generateReport(userId, { reportType, period, format, year = 2026 
   let periodLabel;
   let currencySymbol = "₹";
 
-  const { startDate, endDate, label } = resolvePeriod(period, year);
+  const { startDate: resolvedStart, endDate: resolvedEnd, label } = resolvePeriod(period, year, startDate, endDate);
   periodLabel = label;
 
-  if (reportType === "income_statement") {
-    reportData = await getIncomeStatementData(userId, startDate, endDate);
-    reportName = `Income Statement - ${label}`;
+  // Normalize report type aliases
+  const rawType = (reportType || "income_statement").trim().toLowerCase();
+  let normalizedType = "income_statement";
+  if (rawType.includes("tax")) {
+    normalizedType = "tax_summary";
+  } else if (rawType.includes("budget")) {
+    normalizedType = "budget_performance";
+  } else {
+    normalizedType = "income_statement";
+  }
+
+  let titleLabel = "Financial Statement";
+  if (rawType.includes("expense")) titleLabel = "Expense Report";
+  else if (rawType.includes("income")) titleLabel = "Income Report";
+  else if (rawType.includes("transaction")) titleLabel = "Transaction Report";
+  else if (rawType.includes("savings")) titleLabel = "Savings Report";
+  else if (rawType.includes("tax")) titleLabel = "Tax Summary Report";
+  else if (rawType.includes("budget")) titleLabel = "Budget Performance Report";
+  else if (rawType.includes("monthly") || rawType.includes("financial")) titleLabel = "Monthly Financial Report";
+
+  if (normalizedType === "income_statement") {
+    reportData = await getIncomeStatementData(userId, resolvedStart, resolvedEnd);
+    reportName = `${titleLabel} - ${label}`;
     currencySymbol = getCurrencySymbolForCountry(userCountry);
-  } else if (reportType === "tax_summary") {
-    // Pass userCountry as the fallback country if no estimate is saved
+  } else if (normalizedType === "tax_summary") {
     reportData = await getTaxSummaryData(userId, period, year, userCountry);
     reportName = `Tax Summary - ${label}`;
     currencySymbol = getCurrencySymbolForCountry(reportData.country);
-  } else if (reportType === "budget_performance") {
-    reportData = await getBudgetPerformanceData(userId, startDate, endDate);
+  } else if (normalizedType === "budget_performance") {
+    reportData = await getBudgetPerformanceData(userId, resolvedStart, resolvedEnd);
     reportName = `Budget Performance - ${label}`;
     currencySymbol = getCurrencySymbolForCountry(userCountry);
-  } else {
-    throw new Error(`Unknown report type: ${reportType}`);
   }
 
   const generatedDateStr = new Date().toLocaleString("en-US", {

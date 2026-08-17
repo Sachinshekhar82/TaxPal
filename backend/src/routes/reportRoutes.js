@@ -15,4 +15,8 @@ router.delete("/:id", protect, reportController.deleteReport);
 // Download the generated report file
 router.get("/:id/download", reportController.downloadReportFile);
 
+// Email generated report
+router.post("/email", protect, reportController.emailReport);
+router.post("/:id/email", protect, reportController.emailReport);
+
 module.exports = router;

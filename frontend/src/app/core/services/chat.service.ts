@@ -8,6 +8,21 @@ export interface ChatAction {
   fileType?: string;
   fileName?: string;
   downloadUrl?: string;
+  reportId?: string;
+  reportName?: string;
+  periodLabel?: string;
+  isEmailing?: boolean;
+  summary?: {
+    income?: number;
+    expenses?: number;
+    savings?: number;
+    currencySymbol?: string;
+  };
+  emailRequested?: boolean;
+  emailStatus?: {
+    sent: boolean;
+    message: string;
+  };
   route?: string;
   label?: string;
   view?: 'BUDGET_SUMMARY' | 'SPENDING_BREAKDOWN' | 'TAX_SUMMARY' | 'TRANSACTION_SUMMARY';
@@ -44,5 +59,9 @@ export class ChatService {
 
   getSuggestions(): Observable<{ success: boolean; data: string[] }> {
     return this.http.get<{ success: boolean; data: string[] }>(`${this.apiUrl}/suggestions`);
+  }
+
+  emailReport(reportId: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${environment.apiUrl}/reports/${reportId}/email`, {});
   }
 }
