@@ -54,27 +54,54 @@ async function buildUserContext(userId) {
     amount: categorySpending[cat],
   })).sort((a, b) => b.amount - a.amount);
 
-  // 2. Budgets & progress
-  const budgets = await Budget.find({ userId });
-  let totalBudgetLimit = 0;
-  let totalBudgetSpent = 0;
-  const overBudgetCategories = [];
+  // 2. Budgets & progress for current month
+  const budgetService = require("./budgetService");
+  const yearNum = now.getFullYear();
+  const monthNumStr = String(now.getMonth() + 1).padStart(2, "0");
+  const currentMonthStr = `${yearNum}-${monthNumStr}`;
 
-  budgets.forEach((b) => {
-    totalBudgetLimit += b.limit || 0;
-    totalBudgetSpent += b.spent || 0;
-    if ((b.spent || 0) > (b.limit || 0)) {
-      overBudgetCategories.push(b.category);
-    }
-  });
-
-  const budgetSummary = {
-    totalLimit: totalBudgetLimit,
-    totalSpent: totalBudgetSpent,
-    remaining: totalBudgetLimit - totalBudgetSpent,
-    overBudgetCategories,
-    budgetCount: budgets.length,
+  let budgetSummary = {
+    totalLimit: 0,
+    totalSpent: 0,
+    remaining: 0,
+    overBudgetCategories: [],
+    budgetCount: 0,
+    categories: []
   };
+
+  try {
+    const budgetProgress = await budgetService.getBudgetProgress(userId, currentMonthStr);
+    let totalBudgetLimit = 0;
+    let totalBudgetSpent = 0;
+    const overBudgetCategories = [];
+    const categoriesDetails = [];
+
+    budgetProgress.forEach((bp) => {
+      totalBudgetLimit += bp.limit || 0;
+      totalBudgetSpent += bp.spent || 0;
+      if (bp.spent > bp.limit) {
+        overBudgetCategories.push(bp.category);
+      }
+      categoriesDetails.push({
+        category: bp.category,
+        limit: bp.limit,
+        spent: bp.spent,
+        remaining: bp.remaining,
+        status: bp.status
+      });
+    });
+
+    budgetSummary = {
+      totalLimit: totalBudgetLimit,
+      totalSpent: totalBudgetSpent,
+      remaining: Math.max(0, totalBudgetLimit - totalBudgetSpent),
+      overBudgetCategories,
+      budgetCount: budgetProgress.length,
+      categories: categoriesDetails
+    };
+  } catch (bErr) {
+    console.error("⚠️ Error calculating budget progress for context:", bErr);
+  }
 
   // 3. Tax Estimate
   const latestTaxEstimate = await TaxEstimate.findOne({ userId }).sort({ updatedAt: -1 });
