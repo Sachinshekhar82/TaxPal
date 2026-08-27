@@ -64,14 +64,35 @@ async function processIntent(userId, intent, parameters = {}, userContext = {}) 
       const ext = format === "CSV" ? "csv" : "pdf";
       const fileName = `${report.reportName.replace(/\s+/g, "_")}.${ext}`;
 
-      // Extract real summary metrics from report data
+      // Extract real summary metrics matching specific report type
       const data = report.data || {};
-      const summaryMetrics = {
-        income: data.totalIncome !== undefined ? data.totalIncome : (data.grossIncomeForQuarter || 0),
-        expenses: data.totalExpenses !== undefined ? data.totalExpenses : (data.businessExpenses || 0),
-        savings: data.netIncome !== undefined ? data.netIncome : (data.taxableIncome || 0),
-        currencySymbol: data.currencySymbol || "₹"
-      };
+      let summaryMetrics = null;
+
+      if (report.reportType === "tax_summary") {
+        summaryMetrics = {
+          type: "TAX",
+          grossIncome: data.grossIncomeForQuarter || 0,
+          taxableIncome: data.taxableIncome || 0,
+          estimatedTax: data.estimatedTax || 0,
+          currencySymbol: data.currencySymbol || "₹"
+        };
+      } else if (report.reportType === "budget_performance") {
+        summaryMetrics = {
+          type: "BUDGET",
+          totalLimit: data.totalLimit || 0,
+          totalSpent: data.totalSpent || 0,
+          remaining: data.remaining || 0,
+          currencySymbol: data.currencySymbol || "₹"
+        };
+      } else if (data.totalIncome !== undefined || data.totalExpenses !== undefined) {
+        summaryMetrics = {
+          type: "INCOME_STATEMENT",
+          income: data.totalIncome || 0,
+          expenses: data.totalExpenses || 0,
+          savings: data.netIncome || 0,
+          currencySymbol: data.currencySymbol || "₹"
+        };
+      }
 
       let emailStatus = { sent: false, message: "" };
 

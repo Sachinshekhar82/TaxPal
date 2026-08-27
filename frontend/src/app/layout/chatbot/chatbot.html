@@ -78,20 +78,57 @@
           
           <!-- 1. DOWNLOAD Action Button -->
           <div *ngIf="msg.action.type === 'DOWNLOAD'" class="action-card download-card">
-            <!-- Financial Summary Preview -->
+            <!-- Report Summary Preview -->
             <div *ngIf="msg.action.summary" style="margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(79, 70, 229, 0.05); border-radius: 8px; border: 1px solid rgba(79, 70, 229, 0.15);">
-              <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
-                <span style="color: #64748b;">Income:</span>
-                <strong style="color: #10b981;">{{ msg.action.summary.currencySymbol || '$' }}{{ (msg.action.summary.income || 0) | number:'1.2-2' }}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
-                <span style="color: #64748b;">Expenses:</span>
-                <strong style="color: #ef4444;">{{ msg.action.summary.currencySymbol || '$' }}{{ (msg.action.summary.expenses || 0) | number:'1.2-2' }}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.8125rem;">
-                <span style="color: #64748b;">Savings / Net:</span>
-                <strong style="color: #4f46e5;">{{ msg.action.summary.currencySymbol || '$' }}{{ (msg.action.summary.savings || 0) | number:'1.2-2' }}</strong>
-              </div>
+              
+              <!-- 1. TAX REPORT SUMMARY -->
+              <ng-container *ngIf="msg.action.summary.type === 'TAX'">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+                  <span style="color: #64748b;">Gross Income:</span>
+                  <strong style="color: #0f172a;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.grossIncome || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+                  <span style="color: #64748b;">Taxable Income:</span>
+                  <strong style="color: #0f172a;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.taxableIncome || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem;">
+                  <span style="color: #64748b;">Estimated Tax:</span>
+                  <strong style="color: #4f46e5;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.estimatedTax || 0) | number:'1.2-2' }}</strong>
+                </div>
+              </ng-container>
+
+              <!-- 2. BUDGET REPORT SUMMARY -->
+              <ng-container *ngIf="msg.action.summary.type === 'BUDGET'">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+                  <span style="color: #64748b;">Budget Limit:</span>
+                  <strong style="color: #0f172a;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.totalLimit || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+                  <span style="color: #64748b;">Total Spent:</span>
+                  <strong style="color: #ef4444;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.totalSpent || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem;">
+                  <span style="color: #64748b;">Remaining:</span>
+                  <strong style="color: #10b981;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.remaining || 0) | number:'1.2-2' }}</strong>
+                </div>
+              </ng-container>
+
+              <!-- 3. INCOME STATEMENT REPORT SUMMARY -->
+              <ng-container *ngIf="msg.action.summary.type === 'INCOME_STATEMENT'">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+                  <span style="color: #64748b;">Income:</span>
+                  <strong style="color: #10b981;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.income || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+                  <span style="color: #64748b;">Expenses:</span>
+                  <strong style="color: #ef4444;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.expenses || 0) | number:'1.2-2' }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8125rem;">
+                  <span style="color: #64748b;">Savings / Net:</span>
+                  <strong style="color: #4f46e5;">{{ msg.action.summary.currencySymbol || '₹' }}{{ (msg.action.summary.savings || 0) | number:'1.2-2' }}</strong>
+                </div>
+              </ng-container>
+
             </div>
 
             <!-- Email Status Alert -->

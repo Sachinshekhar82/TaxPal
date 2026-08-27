@@ -13,9 +13,16 @@ export interface ChatAction {
   periodLabel?: string;
   isEmailing?: boolean;
   summary?: {
+    type?: 'INCOME_STATEMENT' | 'TAX' | 'BUDGET';
     income?: number;
     expenses?: number;
     savings?: number;
+    grossIncome?: number;
+    taxableIncome?: number;
+    estimatedTax?: number;
+    totalLimit?: number;
+    totalSpent?: number;
+    remaining?: number;
     currencySymbol?: string;
   };
   emailRequested?: boolean;
